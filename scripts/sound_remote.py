@@ -26,6 +26,7 @@ class ui(tk.Frame):
         self.textButton09 = "barbare-frappe01.wav"
         self.textButton10 = "barbare-pasdormir.wav"
         self.textButton11 = "barbare-tavutatete.wav"
+        # self.textButton12 = "barbare-tavutatete.wav"
         tk.Frame.__init__(self, master)
         self.config(height = 50, width = 200)
         self.grid()
@@ -54,6 +55,8 @@ class ui(tk.Frame):
         self.button10.grid()
         self.button11 = tk.Button(command = self.callbackButton11, text = self.textButton11)
         self.button11.grid()
+        # self.button12 = tk.Button(command = self.callbackButton12, text = self.textButton12)
+        # self.button12.grid()
         self.textEntry = tk.Entry(width = 200)
         self.textEntry.grid()
         self.bind_all('<KeyPress-Return>', self._enterHandler)
@@ -61,7 +64,8 @@ class ui(tk.Frame):
     def _enterHandler(self,event):
         self.toSend = String()
         self.toSend.data = self.textEntry.get()
-        self.pub.publish(self.toSend)
+        if self.toSend.data != "":
+            self.pub.publish(self.toSend)
 
     def callbackButton01(self):
         self.toSend = String()
@@ -117,6 +121,11 @@ class ui(tk.Frame):
         self.toSend = String()
         self.toSend.data = self.soundsFolder + "/" + self.textButton11
         self.pubSound.publish(self.toSend)
+
+    # def callbackButton12(self):
+    #     self.toSend = String()
+    #     self.toSend.data = self.soundsFolder + "/" + self.textButton12
+    #     self.pubSound.publish(self.toSend)
 
 
 

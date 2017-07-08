@@ -13,11 +13,13 @@ import math
 
 
 pub = rospy.Publisher("/cmd_vel_mux/input/teleop",Twist, queue_size=10)
-maxSpeed = 0.25
-emergencyStopDistance = 0.5
-StopDistance = 0.51
-MediumDistance = 1
-FreedomDistance = 1.5
+maxSpeed = 0.25             # Vitesse maximale
+mediumSpeed = 0.2           # Vitesse moyennement limitée
+slowSpeed = 0.1             # Vitesse très limitée
+emergencyStopDistance = 0.5 # Distance à laquelle le robot s'arrete net
+StopDistance = 0.51         # Distance à laquelle le robot freine gentiment pour s'arreter
+MediumDistance = 1          # Distance au delà de laquelle le robo va à mediumSpeed
+FreedomDistance = 1.5       # Distance au delà de laquelle le robot va à maxSpeed
 global currSpeed
 currSpeed= 0
 global currSpeedRad
@@ -54,7 +56,7 @@ def callback(msg):
     if autonomousMode == False:
         pub.publish(joyTwist)
         return
-        
+
     # depth_image.height = height of the matrix
     # depth_image.width = width of the matrix
     # depth_image[x,y] = the float value in m of a point place a a height x and width y
@@ -109,14 +111,14 @@ def callback(msg):
     elif minVal < StopDistance:
         print "Stop"
         acceleration(0)
-    elif minVal < StopDistance:
-        acceleration(0.1)
+    elif minVal < MediumDistance:
+        acceleration(slowSpeed)
         chgDirCounter = chgDirCounter - 2
     elif minVal < FreedomDistance:
-        acceleration(0.2)
+        acceleration(mediumSpeed)
         chgDirCounter = chgDirCounter - 3
     else:
-        acceleration(0.3)
+        acceleration(maxSpeed)
         chgDirCounter = chgDirCounter - 4
 
 
