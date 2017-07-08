@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+
+  <include file="$(find turtlebot_bringup)/launch/minimal.launch" />
+  <include file="$(find astra_launch)/launch/astra.launch" />
+
+  <node name="navigator" pkg="turtleshow" type="embarque.py" />
+  <node name="sound_speaker" pkg="turtleshow" type="sound_player.py" />
+</launch>
