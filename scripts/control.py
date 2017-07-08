@@ -171,7 +171,7 @@ class stick():
                     self.button_states[button] = value
                     if value:
                         print "%s pressed" % (button)
-                        if button == 'trigger':
+                        if button == 'x':
                             self.calling.changeMode()
                         elif button == 'thumb':
                             self.calling.input_key = 'escape'

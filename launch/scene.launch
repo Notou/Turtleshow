@@ -3,6 +3,7 @@
 
   <include file="$(find turtlebot_bringup)/launch/minimal.launch" />
   <include file="$(find astra_launch)/launch/astra.launch" />
+  <!-- <include file="$(find kobuki_auto_docking)/launch/compact.launch" /> -->
 
   <node name="navigator" pkg="turtleshow" type="embarque.py" />
   <node name="sound_speaker" pkg="turtleshow" type="sound_player.py" />

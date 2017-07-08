@@ -33,6 +33,7 @@ rotation = False
 global autonomousMode
 autonomousMode = False
 global joyTwist
+joyTwist = 0
 
 
 def callback(msg):
