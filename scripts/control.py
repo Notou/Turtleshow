@@ -110,7 +110,7 @@ class stick():
         try:
             self.jsdev = open(fn, 'rb')
         except:
-            print 'No device found'
+            rospy.logerr('No device found')
             self.controller = False
             return
         self.controller = True
@@ -217,7 +217,7 @@ class controller():
         self.lasty = 0
         self.lastrx = 0
         self.changeMode()
-        while(True):
+        while not rospy.is_shutdown():
             joy.updatePositionLoop()
             self.pub.publish(self.twist)
 
