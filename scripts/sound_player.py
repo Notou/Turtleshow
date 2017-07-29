@@ -17,14 +17,14 @@ global videoOn
 videoOn = False
 global shouldPlay
 global storagePath
-storagePath = "/home/cyrille/Musique/Turtleshow/"
+storagePath = "/raccourci_video_robot/"
 global speakingVideoPath
-speakingVideoPath = "GeysirCropped.mp4"
+speakingVideoPath = "video_parle.mp4"
 global idleVideoPath
-idleVideoPath = "PuffinConverted.mp4"
+idleVideoPath = "video_tait.mp4"
 global tiredVideoPath
-tiredVideoPath = "chasse.avi"
-baillementSoundPath = "barbareSons/naindows-findesession04.wav"
+tiredVideoPath = "video_fatigue.mp4"
+baillementSoundPath = "son_fatigue.wav"
 global filePath
 global interface
 global player
@@ -58,7 +58,7 @@ def callbackSound(msg):
 
     filePath = storagePath + msg.data
 
-    soundThread = threading.Thread(target=launchSound)
+    soundThread = threading.Thread(target=launchButtonSound)
     soundThread.daemon = True
     soundThread.start()
 
@@ -70,6 +70,21 @@ def callbackSwitchVideo(msg):
         player.stop()
     if videoOn:
         player.play()
+
+def launchButtonSound():
+    global isPlaying
+    global filePath
+    print isPlaying
+    if isPlaying:
+        rospy.logwarn("Il y a déjà un son en train d'être joué")
+        return
+
+    isPlaying = True
+
+    exitCode = call(["play", "-D", filePath, "speed", "0.9"])
+    if exitCode != 0:
+        rospy.logerr("Erreur à l'émission du son!")
+    isPlaying = False
 
 def launchSound():
     global isPlaying
@@ -96,18 +111,12 @@ def launchSound():
     isPlaying = False
 
 def launchBaillementSound():
-    global isPlaying
     global filePath
     global player
     global mediaTired
     global mediaIdle
-    print isPlaying
-    if isPlaying:
-        rospy.logwarn("Il y a déjà un son en train d'être joué")
-        return
-
-    isPlaying = True
-
+    global isPlaying
+    
     player.set_media(mediaTired)
     player.play()
     exitCode = call(["play", "-D", filePath, "speed", "0.9"])
@@ -121,25 +130,32 @@ def launchBaillementSound():
     isPlaying = False
 
 def BatteryChargeCallback(msg):
-
+    global laptopChargeLow
+    global turtlebotChargeLow
+    global filePath
+    global isPlaying
     if msg.y < 20:
         if not laptopChargeLow:
-            laptopChargeLow = True
-            filePath = storagePath + baillementSoundPath
-            soundThread = threading.Thread(target=launchBaillementSound)
-            soundThread.daemon = True
-            soundThread.start()
+            if not isPlaying:
+                isPlaying = True
+                laptopChargeLow = True
+                filePath = storagePath + baillementSoundPath
+                soundThread = threading.Thread(target=launchBaillementSound)
+                soundThread.daemon = True
+                soundThread.start()
     else:
         if laptopChargeLow:
             laptopChargeLow = False
-
+    
     if msg.x < 20:
         if not turtlebotChargeLow:
-            turtlebotChargeLow = True
-            filePath = storagePath + baillementSoundPath
-            soundThread = threading.Thread(target=launchBaillementSound)
-            soundThread.daemon = True
-            soundThread.start()
+            if not isPlaying:
+                isPlaying = True
+                turtlebotChargeLow = True
+                filePath = storagePath + baillementSoundPath
+                soundThread = threading.Thread(target=launchBaillementSound)
+                soundThread.daemon = True
+                soundThread.start()
     else:
         if turtlebotChargeLow:
             turtlebotChargeLow = False
@@ -153,6 +169,7 @@ def listener():
     global player
     global mediaSpeaking
     global mediaIdle
+    global mediaTired
     rospy.init_node('sound_player', anonymous=True)
     rospy.Subscriber("/turtleshow/text_to_say", String, callback)
     rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
