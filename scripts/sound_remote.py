@@ -24,10 +24,10 @@ class ui(Frame):
 
         self.pattern = re.compile('[0-9]+%')
 
-        self.soundsFolder = "barbareSons"
-        self.textButton01 = "naindows-chiantos.wav"
-        self.textButton02 = "naindows-aie01.wav"
-        self.textButton03 = "barbare-baston01.wav"
+        self.soundsFolder = "sons"
+        self.textButton01 = "bruit.wav"
+        self.textButton02 = "sncf.wav"
+        self.textButton03 = "vache.wav"
         self.textButton04 = "barbare-camarchepas.wav"
         self.textButton05 = "naindows-corbeille01.wav"
         self.textButton06 = "naindows-demarrage01.wav"
@@ -175,21 +175,21 @@ class ui(Frame):
         if regieCharge < 20:
             self.regieLaptopChargeLabel.config( foreground = 'red')
         elif regieCharge < 50:
-            self.regieLaptopChargeLabel.config( foreground = 'yellow')
+            self.regieLaptopChargeLabel.config( foreground = 'orange')
         else:
             self.regieLaptopChargeLabel.config( foreground = 'green')
 
         if msg.y < 20:
             self.sceneLaptopChargeLabel.config( foreground = 'red')
         elif msg.y < 50:
-            self.sceneLaptopChargeLabel.config( foreground = 'yellow')
+            self.sceneLaptopChargeLabel.config( foreground = 'orange')
         else:
             self.sceneLaptopChargeLabel.config( foreground = 'green')
 
         if msg.x < 20:
             self.turtlebotChargeLabel.config( foreground = 'red')
         elif msg.x < 50:
-            self.turtlebotChargeLabel.config( foreground = 'yellow')
+            self.turtlebotChargeLabel.config( foreground = 'orange')
         else:
             self.turtlebotChargeLabel.config( foreground = 'green')
 
@@ -205,7 +205,13 @@ class ui(Frame):
         self.pubSwitchVideo.publish(toSend)
 
     def GotToBaseCallback(self):
+        soundThread = threading.Thread(target=self.GoToBase)
+        soundThread.daemon = True
+        soundThread.start()
+
+    def GoToBase(self):
         call(["roslaunch", "kobuki_auto_docking", "activate.launch", "--screen"])
+
 
     def MoveSwitchCallback(self):
         toSend = Bool()
