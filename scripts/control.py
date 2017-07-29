@@ -184,7 +184,7 @@ class stick():
                 axis = self.axis_map[number]
                 if axis:
                     fvalue = value / 32767.0
-                    print 'value: ', value, ' fvalue: ', fvalue
+                    print axis, 'value: ', value, ' fvalue: ', fvalue
                     self.axis_states[axis] = fvalue
                     if axis == 'trottle':
                         print "trottle"
@@ -193,7 +193,7 @@ class stick():
                         self.calling.twist.angular.z = self.calling.twist.angular.z - (fvalue-self.calling.lastx) * 1.5
                         self.calling.lastx = fvalue
                         #self.top_block.PPM_Modulator.set_axis(1, fvalue)
-                    if axis == 'z':
+                    if axis == 'rx':
                         self.calling.twist.angular.z = self.calling.twist.angular.z - (fvalue-self.calling.lastz) * 2
                         self.calling.lastz = fvalue
                         #self.top_block.PPM_Modulator.set_axis(1, fvalue)
@@ -201,7 +201,7 @@ class stick():
                         self.calling.twist.linear.x = self.calling.twist.linear.x - (fvalue-self.calling.lasty) * 0.5
                         self.calling.lasty = fvalue
                         #self.top_block.PPM_Modulator.set_axis(0, fvalue)
-                    if axis == 'rz':
+                    if axis == 'ry':
                         self.calling.twist.linear.x = self.calling.twist.linear.x - (fvalue-self.calling.lastrx) * 1
                         self.calling.lastrx = fvalue
                         #self.top_block.PPM_Modulator.set_axis(3, fvalue)
