@@ -18,6 +18,8 @@ class ui(Frame):
         self.pub = rospy.Publisher("/turtleshow/text_to_say", String, queue_size=10)
         self.pubSound = rospy.Publisher("/turtleshow/sound_to_play", String, queue_size=10)
         self.pubSwitchVideo = rospy.Publisher("/turtleshow/video_on", Bool, queue_size=10)
+        self.pubSwitchMovement = rospy.Publisher("/turtleshow/movement_on", Bool, queue_size=10)
+
         rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
 
         self.pattern = re.compile('[0-9]+%')
@@ -91,6 +93,9 @@ class ui(Frame):
         self.videoOn = False
         self.gotToBaseButton = Button(self.actionButtonsFrame, command = self.GotToBaseCallback, text = "Aller à la base")
         self.gotToBaseButton.grid(pady = 50)
+        self.movementSwitchButton = Button(self.actionButtonsFrame, command = self.MoveSwitchCallback, background = 'red', activebackground = 'red', text = "Turn movement ON")
+        self.movementSwitchButton.grid()
+        self.movementOn = False
 
         self.textEntry = Text(self, wrap=WORD, padx = 10, pady = 10)
         self.textEntry.pack(side = BOTTOM, fill = BOTH, expand = True)
@@ -201,6 +206,17 @@ class ui(Frame):
 
     def GotToBaseCallback(self):
         call(["roslaunch", "kobuki_auto_docking", "activate.launch", "--screen"])
+
+    def MoveSwitchCallback(self):
+        toSend = Bool()
+        if self.movementOn:
+            self.movementSwitchButton.config( activebackground = 'red', background = 'red', text = "Turn movement ON")
+            self.movementOn = False
+        else:
+            self.movementSwitchButton.config( activebackground = 'green', background = 'green', text = "Turn movement OFF")
+            self.movementOn = True
+        toSend.data = self.movementOn
+        self.pubSwitchMovement.publish(toSend)
 
 
 if __name__ == '__main__':

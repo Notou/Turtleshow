@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This Python file uses the following encoding: utf-8
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import sys, tty, termios
@@ -35,6 +35,8 @@ global rotation
 rotation = False
 global autonomousMode
 autonomousMode = False
+global movementOn
+movementOn = False
 global joyTwist
 joyTwist = 0
 
@@ -50,6 +52,10 @@ def callback(msg):
     global joyTwist
     bridge = CvBridge()
     twist = Twist()
+
+    if not movementOn:
+        return
+
     # Use cv_bridge() to convert the ROS image to OpenCV format
     try:
         # The depth image is a single-channel float32 image
@@ -165,11 +171,16 @@ def joystickCallback(msg):
     if msg.linear.y == 1:
         autonomousMode = True
 
+def callbackSwitchMovement(msg):
+    global movementOn
+    movementOn = msg.data
+
 def listener():
     rospy.loginfo("lanching nav node")
     rospy.init_node('nav', anonymous=True)
     rospy.Subscriber("/camera/depth/image", Image, callback)
     rospy.Subscriber("/turtleshow/command", Twist, joystickCallback)
+    rospy.Subscriber("/turtleshow/movement_on", Bool, callbackSwitchMovement)
     rospy.spin()
 
 if __name__ == '__main__':
