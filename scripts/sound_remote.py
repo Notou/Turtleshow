@@ -175,21 +175,21 @@ class ui(Frame):
         if regieCharge < 20:
             self.regieLaptopChargeLabel.config( foreground = 'red')
         elif regieCharge < 50:
-            self.regieLaptopChargeLabel.config( foreground = 'orange')
+            self.regieLaptopChargeLabel.config( foreground = 'brown')
         else:
             self.regieLaptopChargeLabel.config( foreground = 'green')
 
         if msg.y < 20:
             self.sceneLaptopChargeLabel.config( foreground = 'red')
         elif msg.y < 50:
-            self.sceneLaptopChargeLabel.config( foreground = 'orange')
+            self.sceneLaptopChargeLabel.config( foreground = 'brown')
         else:
             self.sceneLaptopChargeLabel.config( foreground = 'green')
 
         if msg.x < 20:
             self.turtlebotChargeLabel.config( foreground = 'red')
         elif msg.x < 50:
-            self.turtlebotChargeLabel.config( foreground = 'orange')
+            self.turtlebotChargeLabel.config( foreground = 'brown')
         else:
             self.turtlebotChargeLabel.config( foreground = 'green')
 
