@@ -19,7 +19,7 @@ emergencyStopDistance = 0.5 # Distance à laquelle le robot s'arrete net
 StopDistance = 0.51         # Distance à laquelle le robot freine gentiment pour s'arreter
 MediumDistance = 1          # Distance au delà de laquelle le robo va à mediumSpeed
 FreedomDistance = 1.5       # Distance au delà de laquelle le robot va à maxSpeed
-joystickMultiplier = 2
+joystickMultiplier = maxSpeed / 1.5
 
 
 pub = rospy.Publisher("/cmd_vel_mux/input/teleop",Twist, queue_size=10)
@@ -70,8 +70,8 @@ def callback(msg):
 
     # Get min dist
     #print np.asarray(depth_image).shape
-    (minVal,maxVal,minLoc,maxLoc) = cv2.minMaxLoc(np.asarray(depth_image[0:250]))
-    #print "Loc : "+str(minLoc)+"Val : "+str(minVal)
+    (minVal,maxVal,minLoc,maxLoc) = cv2.minMaxLoc(np.asarray(depth_image[100:400]))
+    rospy.loginfo("Loc : "+str(minLoc)+"Val : "+str(minVal))
 
 
     # Partie Rotation
@@ -101,7 +101,7 @@ def callback(msg):
     # Partie translation
     targetSpeed = 0
     if minVal < emergencyStopDistance:
-        targetSpeed = -1
+        targetSpeed = float("nan")
         rospy.loginfo("Emergency stop!!!")
     elif minVal < StopDistance:
         rospy.loginfo("Stop")
@@ -129,11 +129,14 @@ def callback(msg):
 
 
     if autonomousMode == False:
-        targetSpeed = targetSpeed * joystickMultiplier * joyTwist.linear.x
+        
+	    
+        targetSpeed = joystickMultiplier * joyTwist.linear.x 
         targetRotation = joyTwist.angular.z
+        rospy.logwarn(str(joyTwist.linear.x) )
     else:
         targetRotation = joyTwist.angular.z + targetRotation
-
+    
     acceleration(targetSpeed)
     accelerationRadiale(targetRotation)
 
@@ -143,24 +146,32 @@ def callback(msg):
 
 def acceleration(targetSpeed):
     global currSpeed
+    accelerationRate = 0.02  #Fonction Smousse
+    if math.isnan(targetSpeed):
+        currSpeed = 0
+        rospy.logerr("target speed is NaN")
+        return
     if targetSpeed>maxSpeed:
         targetSpeed = maxSpeed
-    if targetSpeed < 0:
-        currSpeed = 0
-        return
-
-    if currSpeed > targetSpeed:
-        currSpeed = currSpeed - 0.02
+    if -targetSpeed > maxSpeed:
+        targetSpeed = -maxSpeed
+    
+    if currSpeed > targetSpeed + accelerationRate:
+        currSpeed = currSpeed - accelerationRate
+    elif currSpeed > targetSpeed:
+        currSpeed = targetSpeed
+    elif currSpeed < targetSpeed - accelerationRate:
+        currSpeed = currSpeed + accelerationRate
     elif currSpeed < targetSpeed:
-        currSpeed = currSpeed + 0.01
+        currSpeed = targetSpeed
 
 def accelerationRadiale(targetSpeed):
     global currSpeedRad
 
     if currSpeedRad > targetSpeed:
-        currSpeedRad = currSpeedRad - 0.02
+        currSpeedRad = currSpeedRad - 0.1
     elif currSpeedRad < targetSpeed:
-        currSpeedRad = currSpeedRad + 0.02
+        currSpeedRad = currSpeedRad + 0.1
 
 def joystickCallback(msg):
     global autonomousMode

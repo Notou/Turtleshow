@@ -14,7 +14,7 @@ def callback(msg):
     global p
     if msg.status[0].name == 'mobile_base_nodelet_manager: Battery':
         point = Point()
-        point.x =  int(msg.status[0].values[1])
+        point.x =  float(msg.status[0].values[1].value)
         point.y = int(p.findall(check_output("acpi"))[0].rstrip('%'))
         pubCharge.publish(point)
 
