@@ -120,23 +120,21 @@ def callback(msg):
     if chgDirCounter <= 0:
         chgDirCounter = 0
         rospy.loginfo("Counter : "+str(chgDirCounter))
-        if rotation == True:
-            targetRotation = -0.6
-            targetSpeed = 0
-            chgDirCounter = chgDirCounter - 0.5
-            if chgDirCounter <= 0:
-                rotation = False
+    if rotation == True:
+        targetRotation = -0.6
+        targetSpeed = 0
+        chgDirCounter = chgDirCounter - 0.5
+        if chgDirCounter <= 0:
+            rotation = False
 
 
     if autonomousMode == False:
-        
-	    
-        targetSpeed = joystickMultiplier * joyTwist.linear.x 
+        targetSpeed = joystickMultiplier * joyTwist.linear.x
         targetRotation = joyTwist.angular.z
         rospy.logwarn(str(joyTwist.linear.x) )
     else:
         targetRotation = joyTwist.angular.z + targetRotation
-    
+
     acceleration(targetSpeed)
     accelerationRadiale(targetRotation)
 
@@ -155,7 +153,7 @@ def acceleration(targetSpeed):
         targetSpeed = maxSpeed
     if -targetSpeed > maxSpeed:
         targetSpeed = -maxSpeed
-    
+
     if currSpeed > targetSpeed + accelerationRate:
         currSpeed = currSpeed - accelerationRate
     elif currSpeed > targetSpeed:
