@@ -11,6 +11,7 @@ import ttk as tk
 import threading
 from subprocess import call, check_output
 import re
+import json
 
 class ui(Frame):
     def __init__(self, master):
@@ -23,20 +24,34 @@ class ui(Frame):
         rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
 
         self.pattern = re.compile('[0-9]+%')
+        self.storagePath = "/raccourci_video_robot/"
+
+        # self.listOfButtons = list()
+        #
+        # self.listOfButtons.append({"Nom":"Bruits","Type":"Son","Scene":1,"Texte":"bruit.wav"})
+        # self.listOfButtons.append({"Nom":"SNCF","Type":"Son","Scene":1,"Texte":"sncf.wav"})
+        # self.listOfButtons.append({"Nom":"Carne","Type":"Son","Scene":1,"Texte":"vache.wav"})
+        # self.listOfButtons.append({"Nom":"Texte","Type":"Texte","Scene":1,"Texte":"Ce texte à été envoyé depuis un bouton."})
+        #
+        #
+        # # Open a file for writing
+        # out_file = open(self.storagePath + "config.json","w")
+        #
+        # # Save the dictionary into this file
+        # # (the 'indent=4' is optional, but makes it more readable)
+        # json.dump(self.listOfButtons,out_file, indent=4, ensure_ascii=False)
+        #
+        # # Close the file
+        # out_file.close()
+
+        # Open the file for reading
+        in_file = open(self.storagePath + "config.json","r")
+        # Load the contents from the file, which creates a new dictionary
+        self.listOfButtons = json.load(in_file)
+        # Close the file... we don't need it anymore
+        in_file.close()
 
         self.soundsFolder = "sons"
-        self.textButton01 = "bruit.wav"
-        self.textButton02 = "sncf.wav"
-        self.textButton03 = "vache.wav"
-        self.textButton04 = "barbare-camarchepas.wav"
-        self.textButton05 = "naindows-corbeille01.wav"
-        self.textButton06 = "naindows-demarrage01.wav"
-        self.textButton07 = "barbare-dring.wav"
-        self.textButton08 = "naindows-findesession01.wav"
-        self.textButton09 = "barbare-frappe01.wav"
-        self.textButton10 = "barbare-pasdormir.wav"
-        self.textButton11 = "barbare-tavutatete.wav"
-        # self.textButton12 = "barbare-tavutatete.wav"
 
 
         Frame.__init__(self, master)
@@ -48,124 +63,60 @@ class ui(Frame):
         self.topFrame = tk.Frame(self)
         self.topFrame.pack(fill = BOTH, expand = True)
         #Sounds Buttons
-        self.soundButtonsFrame = tk.Frame(self.topFrame)
-        self.soundButtonsFrame.pack(side = LEFT, fill = X, expand = True)
-        self.button01 = tk.Button(self.soundButtonsFrame, command = self.callbackButton01, text = self.textButton01)
-        self.button01.grid()
-        self.button02 = tk.Button(self.soundButtonsFrame, command = self.callbackButton02, text = self.textButton02)
-        self.button02.grid()
-        self.button03 = tk.Button(self.soundButtonsFrame, command = self.callbackButton03, text = self.textButton03)
-        self.button03.grid()
-        self.button04 = tk.Button(self.soundButtonsFrame, command = self.callbackButton04, text = self.textButton04)
-        self.button04.grid()
-        self.button05 = tk.Button(self.soundButtonsFrame, command = self.callbackButton05, text = self.textButton05)
-        self.button05.grid()
-        self.button06 = tk.Button(self.soundButtonsFrame, command = self.callbackButton06, text = self.textButton06)
-        self.button06.grid()
-        self.button07 = tk.Button(self.soundButtonsFrame, command = self.callbackButton07, text = self.textButton07)
-        self.button07.grid()
-        self.button08 = tk.Button(self.soundButtonsFrame, command = self.callbackButton08, text = self.textButton08)
-        self.button08.grid()
-        self.button09 = tk.Button(self.soundButtonsFrame, command = self.callbackButton09, text = self.textButton09)
-        self.button09.grid()
-        self.button10 = tk.Button(self.soundButtonsFrame, command = self.callbackButton10, text = self.textButton10)
-        self.button10.grid()
-        self.button11 = tk.Button(self.soundButtonsFrame, command = self.callbackButton11, text = self.textButton11)
-        self.button11.grid()
-        # self.button12 = tk.Button(command = self.callbackButton12, text = self.textButton12)
-        # self.button12.grid()
+        self.tabs = tk.Notebook(self.topFrame)
+        self.tabs.pack(side = LEFT, fill = BOTH, expand = True)
+
+        self.listOfTabs = dict()
+        for b in self.listOfButtons:
+            if not b["Scene"] in self.listOfTabs:
+                self.listOfTabs[b["Scene"]] = tk.Frame(self.tabs)
+            button = tk.Button(self.listOfTabs[b["Scene"]], command = (lambda type=b["Type"], text=b["Texte"]: self.callbackButton(type,text)), text = b["Nom"])
+            button.pack()
+        for tab in sorted(self.listOfTabs.keys()):
+            self.tabs.add(self.listOfTabs[tab], text="Scène " + str(tab))
+
 
         #Affichage de la charge
         self.stateDisplayFrame = tk.Frame(self.topFrame)
         self.stateDisplayFrame.pack(side = LEFT, fill = X, expand = True)
         self.turtlebotChargeLabel = tk.Label(self.stateDisplayFrame, text = "Charge du turtlebot: " + "---")
-        self.turtlebotChargeLabel.grid()
+        self.turtlebotChargeLabel.pack()
         self.sceneLaptopChargeLabel = tk.Label(self.stateDisplayFrame, text = "Charge de l'ordinateur sur scene: " + "---")
-        self.sceneLaptopChargeLabel.grid()
+        self.sceneLaptopChargeLabel.pack()
         self.regieLaptopChargeLabel = tk.Label(self.stateDisplayFrame, text = "Charge de l'ordinateur de régie: " + "---")
-        self.regieLaptopChargeLabel.grid()
+        self.regieLaptopChargeLabel.pack()
 
         #Boutons de commande
         self.actionButtonsFrame = tk.Frame(self.topFrame)
-        self.actionButtonsFrame.pack(side = RIGHT, fill = X, expand = True)
+        self.actionButtonsFrame.pack(side = RIGHT, fill = BOTH, expand = True)
         self.videoSwitchButton = Button(self.actionButtonsFrame, command = self.VideoSwitchCallback, background = 'red', activebackground = 'red', text = "Turn video ON")
-        self.videoSwitchButton.grid()
+        self.videoSwitchButton.pack()
         self.videoOn = False
         self.gotToBaseButton = Button(self.actionButtonsFrame, command = self.GotToBaseCallback, text = "Aller à la base")
-        self.gotToBaseButton.grid(pady = 50)
+        self.gotToBaseButton.pack(pady = 50)
         self.movementSwitchButton = Button(self.actionButtonsFrame, command = self.MoveSwitchCallback, background = 'red', activebackground = 'red', text = "Turn movement ON")
-        self.movementSwitchButton.grid()
+        self.movementSwitchButton.pack()
         self.movementOn = False
 
         self.textEntry = Text(self, wrap=WORD, padx = 10, pady = 10)
-        self.textEntry.pack(side = BOTTOM, fill = BOTH, expand = True)
+        self.textEntry.pack(side = BOTTOM, fill = BOTH, expand = True, ipady = 20)
         self.bind_all('<KeyPress-Return>', self._enterHandler)
 
     def _enterHandler(self,event):
         self.toSend = String()
         self.toSend.data = self.textEntry.get("1.0",'end-1c').replace('\n', ' ').replace('\r', '')
+        self.textEntry.delete("1.0",'end-1c')
         if self.toSend.data != "":
             self.pub.publish(self.toSend)
 
-    def callbackButton01(self):
+    def callbackButton(self,type,text):
         self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton01
-        self.pubSound.publish(self.toSend)
+        if type == "Son":
+            self.toSend.data = self.soundsFolder + "/" + text
+            self.pubSound.publish(self.toSend)
+        elif type == "Texte":
+            self.pub.publish(text)
 
-    def callbackButton02(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton02
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton03(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton03
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton04(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton04
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton05(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton05
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton06(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton06
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton07(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton07
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton08(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton08
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton09(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton09
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton10(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton10
-        self.pubSound.publish(self.toSend)
-
-    def callbackButton11(self):
-        self.toSend = String()
-        self.toSend.data = self.soundsFolder + "/" + self.textButton11
-        self.pubSound.publish(self.toSend)
-
-    # def callbackButton12(self):
-    #     self.toSend = String()
-    #     self.toSend.data = self.soundsFolder + "/" + self.textButton12
-    #     self.pubSound.publish(self.toSend)
 
     def BatteryChargeCallback(self, msg):
         regieCharge = int(self.pattern.findall(check_output("acpi"))[0].rstrip('%'))
