@@ -25,6 +25,8 @@ class ui(Frame):
 
         self.pattern = re.compile('[0-9]+%')
         self.storagePath = "/raccourci_video_robot/"
+        self.soundsFolder = "sons"
+        self.columnNumber = 10  #Nombre de colonnes de boutons
 
         # self.listOfButtons = list()
         #
@@ -51,8 +53,6 @@ class ui(Frame):
         # Close the file... we don't need it anymore
         in_file.close()
 
-        self.soundsFolder = "sons"
-
 
         Frame.__init__(self, master)
         self.config(height = 50, width = 100)
@@ -64,16 +64,19 @@ class ui(Frame):
         self.topFrame.pack(fill = BOTH, expand = True)
         #Sounds Buttons
         self.tabs = tk.Notebook(self.topFrame)
-        self.tabs.pack(side = LEFT, fill = BOTH, expand = True)
+        self.tabs.pack(side = TOP, fill = BOTH, expand = True)
 
         self.listOfTabs = dict()
         for b in self.listOfButtons:
             if not b["Scene"] in self.listOfTabs:
-                self.listOfTabs[b["Scene"]] = tk.Frame(self.tabs)
-            button = tk.Button(self.listOfTabs[b["Scene"]], command = (lambda type=b["Type"], text=b["Texte"]: self.callbackButton(type,text)), text = b["Nom"])
-            button.pack()
+                self.listOfTabs[b["Scene"]] = dict()
+                self.listOfTabs[b["Scene"]]["tab"] = tk.Frame(self.tabs)
+                self.listOfTabs[b["Scene"]]["ButtonNumber"]= 0
+            button = tk.Button(self.listOfTabs[b["Scene"]]["tab"], command = (lambda type=b["Type"], text=b["Texte"]: self.callbackButton(type,text)), text = b["Nom"])
+            button.grid(row = self.listOfTabs[b["Scene"]]["ButtonNumber"] / self.columnNumber,column = self.listOfTabs[b["Scene"]]["ButtonNumber"] % self.columnNumber, padx = 5, pady = 5)
+            self.listOfTabs[b["Scene"]]["ButtonNumber"] = self.listOfTabs[b["Scene"]]["ButtonNumber"] + 1;
         for tab in sorted(self.listOfTabs.keys()):
-            self.tabs.add(self.listOfTabs[tab], text="Scène " + str(tab))
+            self.tabs.add(self.listOfTabs[tab]["tab"], text=str(tab))
 
 
         #Affichage de la charge
@@ -93,7 +96,7 @@ class ui(Frame):
         self.videoSwitchButton.pack()
         self.videoOn = False
         self.gotToBaseButton = Button(self.actionButtonsFrame, command = self.GotToBaseCallback, text = "Aller à la base")
-        self.gotToBaseButton.pack(pady = 50)
+        self.gotToBaseButton.pack(pady = 10)
         self.movementSwitchButton = Button(self.actionButtonsFrame, command = self.MoveSwitchCallback, background = 'red', activebackground = 'red', text = "Turn movement ON")
         self.movementSwitchButton.pack()
         self.movementOn = False
