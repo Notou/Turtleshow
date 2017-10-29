@@ -102,7 +102,7 @@ def launchSound():
     player.set_media(mediaSpeaking)
     if videoOn:
         player.play()
-    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.7","reverse", "speed", "0.9"])
+    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.7","reverse", "speed", "0.9"]) #Permet de couper aant la fin du fichier (ici 0.7s)
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     player.set_media(mediaIdle)
