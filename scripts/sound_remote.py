@@ -12,6 +12,8 @@ import threading
 from subprocess import call, check_output
 import re
 import json
+from datetime import datetime
+
 
 class ui(Frame):
     def __init__(self, master):
@@ -111,6 +113,8 @@ class ui(Frame):
         self.textEntry.delete("1.0",'end-1c')
         if self.toSend.data != "":
             self.pub.publish(self.toSend)
+        with open(self.storagePath + 'historique_des_textes_entres.txt', 'a') as f:
+            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " : " + self.toSend.data.encode('utf-8') + "\n")
 
     def callbackButton(self,type,text):
         self.toSend = String()
