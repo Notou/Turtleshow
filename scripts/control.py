@@ -105,7 +105,7 @@ class stick():
         self.button_map = []
 
         # Open the joystick device.
-        fn = '/dev/input/js0'
+        fn = '/dev/input/js1'
         print('Opening %s...' % fn)
         try:
             self.jsdev = open(fn, 'rb')
