@@ -78,7 +78,7 @@ class ui(Frame):
             button.grid(row = self.listOfTabs[b["Scene"]]["ButtonNumber"] / self.columnNumber,column = self.listOfTabs[b["Scene"]]["ButtonNumber"] % self.columnNumber, padx = 5, pady = 5)
             self.listOfTabs[b["Scene"]]["ButtonNumber"] = self.listOfTabs[b["Scene"]]["ButtonNumber"] + 1;
         for tab in sorted(self.listOfTabs.keys()):
-            self.tabs.add(self.listOfTabs[tab]["tab"], text=str(tab))
+            self.tabs.add(self.listOfTabs[tab]["tab"], text="Q" + str(tab))
 
 
         #Affichage de la charge

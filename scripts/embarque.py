@@ -12,9 +12,9 @@ import cv2
 import math
 
 
-maxSpeed = 0.25             # Vitesse maximale
-mediumSpeed = 0.2           # Vitesse moyennement limitée
-slowSpeed = 0.1             # Vitesse très limitée
+maxSpeed = 0.5             # Vitesse maximale
+mediumSpeed = 0.           # Vitesse moyennement limitée
+slowSpeed = 0.             # Vitesse très limitée
 emergencyStopDistance = 0.5 # Distance à laquelle le robot s'arrete net
 StopDistance = 0.51         # Distance à laquelle le robot freine gentiment pour s'arreter
 MediumDistance = 1          # Distance au delà de laquelle le robo va à mediumSpeed
