@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-  <node name="sound_speaker" pkg="turtleshow" type="sound_player.py" output="screen"/>
+  <node name="retour_video" pkg="turtleshow" type="video_player.py" output="screen"/>
 </launch>

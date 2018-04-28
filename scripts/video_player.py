@@ -36,7 +36,8 @@ global laptopChargeLow
 laptopChargeLow = False
 global turtlebotChargeLow
 turtlebotChargeLow = False
-playbackVolume = 0
+playbackVolume = 0  	#Réglage volume son
+videoZoom = 0.4		#Réglage taille fenetre
 
 def callback(msg):
     global storagePath
@@ -82,7 +83,7 @@ def launchButtonSound():
 
     isPlaying = True
 
-    exitCode = call(["play", "-D", filePath, "speed", "0.9", "--volume", playbackVolume])
+    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     isPlaying = False
@@ -103,7 +104,7 @@ def launchSound():
     player.set_media(mediaSpeaking)
     if videoOn:
         player.play()
-    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9", "--volume", playbackVolume]) #Permet de couper avant la fin du fichier (ici 0.4s)
+    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9", "vol", str(playbackVolume)]) #Permet de couper avant la fin du fichier (ici 0.4s)
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     player.set_media(mediaIdle)
@@ -120,7 +121,7 @@ def launchBaillementSound():
 
     player.set_media(mediaTired)
     player.play()
-    exitCode = call(["play", "-D", filePath, "speed", "0.9", "--volume", playbackVolume])
+    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     player.set_media(mediaIdle)
@@ -176,9 +177,9 @@ def listener():
     rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
     rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
     rospy.Subscriber("/turtleshow/robot_charge_level", Point, BatteryChargeCallback)
-    interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--mouse-hide-timeout=0')
+    interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(videoZoom))
     player=interface.media_player_new()
-    player.toggle_fullscreen()
+    #player.toggle_fullscreen()
     mediaSpeaking = interface.media_new(storagePath+speakingVideoPath)
     mediaIdle = interface.media_new(storagePath+idleVideoPath)
     mediaTired = interface.media_new(storagePath+tiredVideoPath)
