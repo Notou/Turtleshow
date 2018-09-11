@@ -70,7 +70,7 @@ def callback(msg):
 
     # Get min dist
     #print np.asarray(depth_image).shape
-    (minVal,maxVal,minLoc,maxLoc) = cv2.minMaxLoc(np.asarray(depth_image[100:400]))
+    (minVal,maxVal,minLoc,maxLoc) = cv2.minMaxLoc(np.asarray(depth_image[100:280]))
     rospy.loginfo("Loc : "+str(minLoc)+"Val : "+str(minVal))
 
 
@@ -96,7 +96,7 @@ def callback(msg):
             lastDirection = "gauche"
         targetRotation = 0.5
     else:
-        targetRotation = 0
+        targetRotation = 0 + 5 * np.random.randn()
 
     # Partie translation
     targetSpeed = 0
