@@ -3,4 +3,5 @@
   <!-- this file is included by bebop_driver launch files by default in their own namespaces -->
   <node name="joystick_controller" pkg="turtleshow" type="control.py" output="screen"/>
   <node name="gui_sound_controller" pkg="turtleshow" type="sound_remote.py" />
+  <node name="retour_audio" pkg="turtleshow" type="sound_player.py" args="-v" output="screen"/>
 </launch>

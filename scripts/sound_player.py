@@ -3,19 +3,16 @@
 import rospy
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Point
-import sys
-import numpy as np
-import math
 from subprocess import call
 import threading
 import vlc
+from optparse import OptionParser
 
 
 global isPlaying
 isPlaying = False
 global videoOn
 videoOn = False
-global shouldPlay
 global storagePath
 storagePath = "/raccourci_video_robot/"
 global speakingVideoPath
@@ -36,6 +33,8 @@ global laptopChargeLow
 laptopChargeLow = False
 global turtlebotChargeLow
 turtlebotChargeLow = False
+global playbackVolume
+playbackVolume = 1
 
 def callback(msg):
     global storagePath
@@ -81,7 +80,7 @@ def launchButtonSound():
 
     isPlaying = True
 
-    exitCode = call(["play", "-D", filePath, "speed", "0.9"])
+    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     isPlaying = False
@@ -102,7 +101,7 @@ def launchSound():
     player.set_media(mediaSpeaking)
     if videoOn:
         player.play()
-    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9"]) #Permet de couper avant la fin du fichier (ici 0.4s)
+    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9", "vol", str(playbackVolume)]) #Permet de couper avant la fin du fichier (ici 0.4s)
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     player.set_media(mediaIdle)
@@ -116,10 +115,10 @@ def launchBaillementSound():
     global mediaTired
     global mediaIdle
     global isPlaying
-    
+
     player.set_media(mediaTired)
     player.play()
-    exitCode = call(["play", "-D", filePath, "speed", "0.9"])
+    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
     if exitCode != 0:
         rospy.logerr("Erreur à l'émission du son!")
     player.set_media(mediaIdle)
@@ -146,7 +145,7 @@ def BatteryChargeCallback(msg):
     else:
         if laptopChargeLow:
             laptopChargeLow = False
-    
+
     if msg.x < 20:
         if not turtlebotChargeLow:
             if not isPlaying:
@@ -170,14 +169,29 @@ def listener():
     global mediaSpeaking
     global mediaIdle
     global mediaTired
+    global playbackVolume
+
+    # Parse arguments
+    options, _ = argument_parser().parse_args()
+    video = options.video
+    playbackVolume = options.audio
+    zoom = options.zoom
+
     rospy.init_node('sound_player', anonymous=True)
     rospy.Subscriber("/turtleshow/text_to_say", String, callback)
     rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
-    rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
+    if video:
+        rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
     rospy.Subscriber("/turtleshow/robot_charge_level", Point, BatteryChargeCallback)
-    interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
-    player=interface.media_player_new()
-    player.toggle_fullscreen()
+
+    if zoom == 1:
+        interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
+        player=interface.media_player_new()
+        player.toggle_fullscreen()
+    else:
+        interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(zoom))
+        player=interface.media_player_new()
+
     mediaSpeaking = interface.media_new(storagePath+speakingVideoPath)
     mediaIdle = interface.media_new(storagePath+idleVideoPath)
     mediaTired = interface.media_new(storagePath+tiredVideoPath)
@@ -187,6 +201,20 @@ def listener():
 
     rospy.loginfo("Sound player launched")
     rospy.spin()
+
+def argument_parser():
+    parser = OptionParser(usage="%prog: [options]", option_class=eng_option)
+    parser.add_option(
+        "-v", "--no-video", dest="video", action="store_false", default=True,
+        help="Turn off video output")
+    parser.add_option(
+        "-z", "--video-zoom", dest="zoom", type="float", default=1,
+        help="Set video zoom [default=%default]")
+    parser.add_option(
+        "-a", "--audio-volume", dest="audio", type="float", default=1,
+        help="Set audio volume [default=%default]")
+
+    return parser
 
 if __name__ == '__main__':
     listener()
