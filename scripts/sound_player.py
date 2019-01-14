@@ -203,7 +203,7 @@ def listener():
     rospy.spin()
 
 def argument_parser():
-    parser = OptionParser(usage="%prog: [options]", option_class=eng_option)
+    parser = OptionParser(usage="%prog: [options]")
     parser.add_option(
         "-v", "--no-video", dest="video", action="store_false", default=True,
         help="Turn off video output")
