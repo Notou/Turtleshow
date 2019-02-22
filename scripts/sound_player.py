@@ -68,6 +68,7 @@ class sound_player():
 
     def callback(self, msg):
         print msg.data
+        self.syncArray = zeroes(self.number)
 
         self.filePath = self.storagePath + "toBePlayed.wav"
         exitCode = call(["pico2wave", "-w", self.filePath, "-l", "fr-FR", msg.data])
@@ -75,7 +76,6 @@ class sound_player():
             rospy.logerr("Erreur à la création du fichier son!")
 
         time.sleep(1)
-        self.syncArray = zeroes(self.number)
         self.pubSynchro.publish(self.syncMsg)
 
 
