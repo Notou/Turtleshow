@@ -42,7 +42,7 @@ class sound_player():
 
         # Handle synchro
         self.syncMsg = Int8(self.id)
-        self.pubSynchro = rospy.Publisher("/turtleshow/synchro", Inti8, queue_size=10)
+        self.pubSynchro = rospy.Publisher("/turtleshow/synchro", Int8, queue_size=10)
         self.syncArray = zeroes(self.number)
 
 
