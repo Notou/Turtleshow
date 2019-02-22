@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This Python file uses the following encoding: utf-8
 import rospy
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, Int8
 from geometry_msgs.msg import Point
 from subprocess import call
 import threading
@@ -40,6 +40,12 @@ class sound_player():
             rospy.Subscriber("/turtleshow/video_on", Bool, self.callbackSwitchVideo)
         rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
 
+        # Handle synchro
+        self.syncMsg = Int8(self.id)
+        self.pubSynchro = rospy.Publisher("/turtleshow/synchro", Inti8, queue_size=10)
+        self.syncArray = zeroes(self.number)
+
+
         if zoom == 1:
             self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
             self.player=self.interface.media_player_new()
@@ -66,9 +72,9 @@ class sound_player():
         if exitCode != 0:
             rospy.logerr("Erreur à la création du fichier son!")
 
-        soundThread = threading.Thread(target=self.launchSound)
-        soundThread.daemon = True
-        soundThread.start()
+        self.syncArray = zeroes(self.number)
+        self.pubSynchro.pub(self.syncMsg)
+
 
     def callbackSound(self, msg):
         print msg.data
@@ -85,6 +91,13 @@ class sound_player():
             self.player.stop()
         if self.videoOn:
             self.player.play()
+
+    def callbackSynchro(self, msg):
+        self.syncArray[msd.data] = 1
+        if fullArray(self.syncArray):
+            soundThread = threading.Thread(target=self.launchSound)
+            soundThread.daemon = True
+            soundThread.start()
 
     def launchButtonSound(self):
         print self.isPlaying
@@ -159,6 +172,17 @@ class sound_player():
             if self.turtlebotChargeLow:
                 self.turtlebotChargeLow = False
 
+def fullArray(array):
+    for i in array:
+        if i < 1:
+            return False
+    return True
+
+def zeroes(nb):
+    array = []
+    for i in range(nb):
+        array.append(0)
+    return array
 
 def argument_parser():
     parser = OptionParser(usage="%prog: [options]")
