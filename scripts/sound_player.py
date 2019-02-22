@@ -39,6 +39,7 @@ class sound_player():
         if self.video:
             rospy.Subscriber("/turtleshow/video_on", Bool, self.callbackSwitchVideo)
         rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
+        rospy.Subscriber("/turtleshow/synchro", Int8, self.callbackSynchro)
 
         # Handle synchro
         self.syncMsg = Int8(self.id)
