@@ -9,198 +9,156 @@ import vlc
 from optparse import OptionParser
 
 
-global isPlaying
-isPlaying = False
-global videoOn
-videoOn = False
-global storagePath
-storagePath = "/raccourci_video_robot/"
-global speakingVideoPath
-speakingVideoPath = "video_parle.mp4"
-global idleVideoPath
-idleVideoPath = "video_tait.mp4"
-global tiredVideoPath
-tiredVideoPath = "video_fatigue.mp4"
-baillementSoundPath = "son_fatigue.wav"
-global filePath
-global interface
-global player
-global mediaSpeaking
-global mediaIdle
-global mediaTired
+class sound_player():
+    def __init__(self):
+        # Constants
+        self.storagePath = "/raccourci_video_robot/"
+        self.speakingVideoPath = "video_parle.mp4"
+        self.idleVideoPath = "video_tait.mp4"
+        self.tiredVideoPath = "video_fatigue.mp4"
+        self.baillementSoundPath = "son_fatigue.wav"
 
-global laptopChargeLow
-laptopChargeLow = False
-global turtlebotChargeLow
-turtlebotChargeLow = False
-global playbackVolume
-playbackVolume = 1
+        # Init variables
+        self.laptopChargeLow = False
+        self.turtlebotChargeLow = False
+        self.isPlaying = False
+        self.videoOn = False
+        self.playbackVolume = 1
 
-def callback(msg):
-    global storagePath
-    global filePath
-    print msg.data
+        # Parse arguments
+        options, _ = argument_parser().parse_args()
+        self.video = options.video
+        self.self.playbackVolume = options.audio
+        self.zoom = options.zoom
+        self.id = options.id
+        self.number = options.number
 
-    filePath = storagePath + "toBePlayed.wav"
-    exitCode = call(["pico2wave", "-w", filePath, "-l", "fr-FR", msg.data])
-    if exitCode != 0:
-        rospy.logerr("Erreur à la création du fichier son!")
+        rospy.init_node('sound_player', anonymous=True)
+        rospy.Subscriber("/turtleshow/text_to_say", String, callback)
+        rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
+        if video:
+            rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
+        rospy.Subscriber("/turtleshow/robot_charge_level", Point, BatteryChargeCallback)
 
-    soundThread = threading.Thread(target=launchSound)
-    soundThread.daemon = True
-    soundThread.start()
+        if zoom == 1:
+            self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
+            self.player=self.interface.media_player_new()
+            self.player.toggle_fullscreen()
+        else:
+            self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(zoom))
+            self.player=self.interface.media_player_new()
 
-def callbackSound(msg):
-    global storagePath
-    global filePath
-    print msg.data
+        self.mediaSpeaking = self.interface.media_new(self.storagePath+self.speakingVideoPath)
+        self.mediaIdle = self.interface.media_new(self.storagePath+self.idleVideoPath)
+        self.mediaTired = self.interface.media_new(self.storagePath+self.tiredVideoPath)
+        self.player.set_media(self.mediaIdle)
+        if self.videoOn:
+            self.player.play()
 
-    filePath = storagePath + msg.data
+        rospy.loginfo("Sound self.player launched")
+        rospy.spin()
 
-    soundThread = threading.Thread(target=launchButtonSound)
-    soundThread.daemon = True
-    soundThread.start()
+    def callback(self, msg):
+        print msg.data
 
-def callbackSwitchVideo(msg):
-    global player
-    global videoOn
-    videoOn = msg.data
-    if not videoOn:
-        player.stop()
-    if videoOn:
-        player.play()
+        self.filePath = self.storagePath + "toBePlayed.wav"
+        exitCode = call(["pico2wave", "-w", self.filePath, "-l", "fr-FR", msg.data])
+        if exitCode != 0:
+            rospy.logerr("Erreur à la création du fichier son!")
 
-def launchButtonSound():
-    global isPlaying
-    global filePath
-    print isPlaying
-    if isPlaying:
-        rospy.logwarn("Il y a déjà un son en train d'être joué")
-        return
+        soundThread = threading.Thread(target=launchSound)
+        soundThread.daemon = True
+        soundThread.start()
 
-    isPlaying = True
+    def callbackSound(self, msg):
+        print msg.data
 
-    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
-    if exitCode != 0:
-        rospy.logerr("Erreur à l'émission du son!")
-    isPlaying = False
+        self.filePath = self.storagePath + msg.data
 
-def launchSound():
-    global isPlaying
-    global filePath
-    global player
-    global mediaTired
-    global mediaIdle
-    print isPlaying
-    if isPlaying:
-        rospy.logwarn("Il y a déjà un son en train d'être joué")
-        return
+        soundThread = threading.Thread(target=launchButtonSound)
+        soundThread.daemon = True
+        soundThread.start()
 
-    isPlaying = True
+    def callbackSwitchVideo(self, msg):
+        self.videoOn = msg.data
+        if not self.videoOn:
+            self.player.stop()
+        if self.videoOn:
+            self.player.play()
 
-    player.set_media(mediaSpeaking)
-    if videoOn:
-        player.play()
-    exitCode = call(["play", "-D", filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9", "vol", str(playbackVolume)]) #Permet de couper avant la fin du fichier (ici 0.4s)
-    if exitCode != 0:
-        rospy.logerr("Erreur à l'émission du son!")
-    player.set_media(mediaIdle)
-    if videoOn:
-        player.play()
-    isPlaying = False
+    def launchButtonSound(self):
+        print self.isPlaying
+        if self.isPlaying:
+            rospy.logwarn("Il y a déjà un son en train d'être joué")
+            return
 
-def launchBaillementSound():
-    global filePath
-    global player
-    global mediaTired
-    global mediaIdle
-    global isPlaying
+        self.isPlaying = True
 
-    player.set_media(mediaTired)
-    player.play()
-    exitCode = call(["play", "-D", filePath, "speed", "0.9", "vol", str(playbackVolume)])
-    if exitCode != 0:
-        rospy.logerr("Erreur à l'émission du son!")
-    player.set_media(mediaIdle)
-    if videoOn:
-        player.play()
-    else:
-        player.stop()
-    isPlaying = False
+        exitCode = call(["play", "-D", self.filePath, "speed", "0.9", "vol", str(self.playbackVolume)])
+        if exitCode != 0:
+            rospy.logerr("Erreur à l'émission du son!")
+        self.isPlaying = False
 
-def BatteryChargeCallback(msg):
-    global laptopChargeLow
-    global turtlebotChargeLow
-    global filePath
-    global isPlaying
-    if msg.y < 20:
-        if not laptopChargeLow:
-            if not isPlaying:
-                isPlaying = True
-                laptopChargeLow = True
-                filePath = storagePath + baillementSoundPath
-                soundThread = threading.Thread(target=launchBaillementSound)
-                soundThread.daemon = True
-                soundThread.start()
-    else:
-        if laptopChargeLow:
-            laptopChargeLow = False
+    def launchSound(self):
+        print self.isPlaying
+        if self.isPlaying:
+            rospy.logwarn("Il y a déjà un son en train d'être joué")
+            return
 
-    if msg.x < 20:
-        if not turtlebotChargeLow:
-            if not isPlaying:
-                isPlaying = True
-                turtlebotChargeLow = True
-                filePath = storagePath + baillementSoundPath
-                soundThread = threading.Thread(target=launchBaillementSound)
-                soundThread.daemon = True
-                soundThread.start()
-    else:
-        if turtlebotChargeLow:
-            turtlebotChargeLow = False
+        self.isPlaying = True
 
+        self.player.set_media(self.mediaSpeaking)
+        if self.videoOn:
+            self.player.play()
+        exitCode = call(["play", "-D", self.filePath, "reverse", "trim", "0.4","reverse", "speed", "0.9", "vol", str(self.playbackVolume)]) #Permet de couper avant la fin du fichier (ici 0.4s)
+        if exitCode != 0:
+            rospy.logerr("Erreur à l'émission du son!")
+        self.player.set_media(self.mediaIdle)
+        if self.videoOn:
+            self.player.play()
+        self.isPlaying = False
 
-def listener():
-    global storagePath
-    global idleVideoPath
-    global speakingVideoPath
-    global interface
-    global player
-    global mediaSpeaking
-    global mediaIdle
-    global mediaTired
-    global playbackVolume
+    def launchBaillementSound(self):
 
-    # Parse arguments
-    options, _ = argument_parser().parse_args()
-    video = options.video
-    playbackVolume = options.audio
-    zoom = options.zoom
+        self.player.set_media(self.mediaTired)
+        self.player.play()
+        exitCode = call(["play", "-D", self.filePath, "speed", "0.9", "vol", str(self.playbackVolume)])
+        if exitCode != 0:
+            rospy.logerr("Erreur à l'émission du son!")
+        self.player.set_media(self.mediaIdle)
+        if self.videoOn:
+            self.player.play()
+        else:
+            self.player.stop()
+        self.isPlaying = False
 
-    rospy.init_node('sound_player', anonymous=True)
-    rospy.Subscriber("/turtleshow/text_to_say", String, callback)
-    rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
-    if video:
-        rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
-    rospy.Subscriber("/turtleshow/robot_charge_level", Point, BatteryChargeCallback)
+    def BatteryChargeCallback(self, msg):
+        if msg.y < 20:
+            if not self.laptopChargeLow:
+                if not self.isPlaying:
+                    self.isPlaying = True
+                    self.laptopChargeLow = True
+                    self.filePath = self.storagePath + self.baillementSoundPath
+                    soundThread = threading.Thread(target=launchBaillementSound)
+                    soundThread.daemon = True
+                    soundThread.start()
+        else:
+            if self.laptopChargeLow:
+                self.laptopChargeLow = False
 
-    if zoom == 1:
-        interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
-        player=interface.media_player_new()
-        player.toggle_fullscreen()
-    else:
-        interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(zoom))
-        player=interface.media_player_new()
+        if msg.x < 20:
+            if not self.turtlebotChargeLow:
+                if not self.isPlaying:
+                    self.isPlaying = True
+                    self.turtlebotChargeLow = True
+                    self.filePath = self.storagePath + self.baillementSoundPath
+                    soundThread = threading.Thread(target=launchBaillementSound)
+                    soundThread.daemon = True
+                    soundThread.start()
+        else:
+            if self.turtlebotChargeLow:
+                self.turtlebotChargeLow = False
 
-    mediaSpeaking = interface.media_new(storagePath+speakingVideoPath)
-    mediaIdle = interface.media_new(storagePath+idleVideoPath)
-    mediaTired = interface.media_new(storagePath+tiredVideoPath)
-    player.set_media(mediaIdle)
-    if videoOn:
-        player.play()
-
-    rospy.loginfo("Sound player launched")
-    rospy.spin()
 
 def argument_parser():
     parser = OptionParser(usage="%prog: [options]")
@@ -213,8 +171,14 @@ def argument_parser():
     parser.add_option(
         "-a", "--audio-volume", dest="audio", type="float", default=1,
         help="Set audio volume [default=%default]")
+    parser.add_option(
+        "-n", "--nb-process", dest="number", type="int", default=3,
+        help="number of sound self.player instances [default=%default]")
+    parser.add_option(
+        "-i", "--id-proc", dest="id", type="int", default=0,
+        help="id of this instance [default=%default]")
 
     return parser
 
 if __name__ == '__main__':
-    listener()
+    listener = sound_player()
