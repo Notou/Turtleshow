@@ -6,6 +6,6 @@
   <include file="$(find kobuki_auto_docking)/launch/minimal.launch" />
 
   <node name="navigator" pkg="turtleshow" type="embarque.py" output="screen"/>
-  <node name="sound_speaker" pkg="turtleshow" type="sound_player.py" output="screen"/>
+  <node name="sound_speaker" pkg="turtleshow" type="sound_player.py" args="--nb-process 3 --id-proc 0"output="screen"/>
   <node name="battery_watcher" pkg="turtleshow" type="testBattery.py" output="screen"/>
 </launch>
