@@ -73,7 +73,7 @@ class sound_player():
             rospy.logerr("Erreur à la création du fichier son!")
 
         self.syncArray = zeroes(self.number)
-        self.pubSynchro.pub(self.syncMsg)
+        self.pubSynchro.publish(self.syncMsg)
 
 
     def callbackSound(self, msg):
