@@ -6,7 +6,6 @@ from geometry_msgs.msg import Point
 from subprocess import call
 import threading
 import vlc
-import time
 from optparse import OptionParser
 
 
@@ -75,7 +74,6 @@ class sound_player():
         if exitCode != 0:
             rospy.logerr("Erreur à la création du fichier son!")
 
-        time.sleep(1)
         self.pubSynchro.publish(self.syncMsg)
 
 
