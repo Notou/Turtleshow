@@ -29,7 +29,7 @@ class sound_player():
         options, _ = argument_parser().parse_args()
         self.video = options.video
         self.playbackVolume = options.audio
-        self.zoom = options.zoom
+        zoom = options.zoom
         self.id = options.id
         self.number = options.number
 
