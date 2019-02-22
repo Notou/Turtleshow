@@ -94,7 +94,7 @@ class sound_player():
             self.player.play()
 
     def callbackSynchro(self, msg):
-        self.syncArray[msd.data] = 1
+        self.syncArray[msg.data] = 1
         if fullArray(self.syncArray):
             soundThread = threading.Thread(target=self.launchSound)
             soundThread.daemon = True
