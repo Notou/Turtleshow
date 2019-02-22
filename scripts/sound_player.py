@@ -34,11 +34,11 @@ class sound_player():
         self.number = options.number
 
         rospy.init_node('sound_player', anonymous=True)
-        rospy.Subscriber("/turtleshow/text_to_say", String, callback)
-        rospy.Subscriber("/turtleshow/sound_to_play", String, callbackSound)
+        rospy.Subscriber("/turtleshow/text_to_say", String, self.callback)
+        rospy.Subscriber("/turtleshow/sound_to_play", String, self.callbackSound)
         if video:
-            rospy.Subscriber("/turtleshow/video_on", Bool, callbackSwitchVideo)
-        rospy.Subscriber("/turtleshow/robot_charge_level", Point, BatteryChargeCallback)
+            rospy.Subscriber("/turtleshow/video_on", Bool, self.callbackSwitchVideo)
+        rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
 
         if zoom == 1:
             self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
