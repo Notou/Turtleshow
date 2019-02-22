@@ -66,7 +66,7 @@ class sound_player():
         if exitCode != 0:
             rospy.logerr("Erreur à la création du fichier son!")
 
-        soundThread = threading.Thread(target=launchSound)
+        soundThread = threading.Thread(target=self.launchSound)
         soundThread.daemon = True
         soundThread.start()
 
@@ -75,7 +75,7 @@ class sound_player():
 
         self.filePath = self.storagePath + msg.data
 
-        soundThread = threading.Thread(target=launchButtonSound)
+        soundThread = threading.Thread(target=self.launchButtonSound)
         soundThread.daemon = True
         soundThread.start()
 
@@ -139,7 +139,7 @@ class sound_player():
                     self.isPlaying = True
                     self.laptopChargeLow = True
                     self.filePath = self.storagePath + self.baillementSoundPath
-                    soundThread = threading.Thread(target=launchBaillementSound)
+                    soundThread = threading.Thread(target=self.launchBaillementSound)
                     soundThread.daemon = True
                     soundThread.start()
         else:
@@ -152,7 +152,7 @@ class sound_player():
                     self.isPlaying = True
                     self.turtlebotChargeLow = True
                     self.filePath = self.storagePath + self.baillementSoundPath
-                    soundThread = threading.Thread(target=launchBaillementSound)
+                    soundThread = threading.Thread(target=self.launchBaillementSound)
                     soundThread.daemon = True
                     soundThread.start()
         else:
