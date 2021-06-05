@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from std_msgs.msg import String
@@ -117,7 +117,7 @@ class stick():
 
         # Get the device name.
         #buf = bytearray(63)
-        buf = array.array('c', ['\0'] * 64)
+        buf = array.array('B', [0] * 64)
         ioctl(self.jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
         js_name = buf.tostring()
         print('Device name: %s' % js_name)
@@ -149,8 +149,8 @@ class stick():
                 self.button_map.append(btn_name)
                 self.button_states[btn_name] = 0
 
-                print '%d axes found: %s' % (num_axes, ', '.join(self.axis_map))
-                print '%d buttons found: %s' % (num_buttons, ', '.join(self.button_map))
+                print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
+                print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
 
     def updatePositionLoop(self):
         if not self.controller:
@@ -163,31 +163,31 @@ class stick():
             time, value, type, number = struct.unpack('IhBB', evbuf)
 
             if type & 0x80:
-                print "(initial)",
+                print("(initial)"),
 
             if type & 0x01:
                 button = self.button_map[number]
                 if button:
                     self.button_states[button] = value
                     if value:
-                        print "%s pressed" % (button)
+                        print("%s pressed" % (button))
                         if button == 'x':
                             self.calling.changeMode()
                         elif button == 'thumb':
                             self.calling.input_key = 'escape'
                     else:
                         pass
-                        print "%s released" % (button)
+                        print("%s released" % (button))
 
 
             if type & 0x02:
                 axis = self.axis_map[number]
                 if axis:
                     fvalue = value / 32767.0
-                    print axis, 'value: ', value, ' fvalue: ', fvalue
+                    print(axis, 'value: ', value, ' fvalue: ', fvalue)
                     self.axis_states[axis] = fvalue
                     if axis == 'trottle':
-                        print "trottle"
+                        print("trottle")
                         #self.top_block.PPM_Modulator.set_axis(2, fvalue)
                     if axis == 'x':
                         self.calling.twist.angular.z = self.calling.twist.angular.z - (fvalue-self.calling.lastx) * 1.5

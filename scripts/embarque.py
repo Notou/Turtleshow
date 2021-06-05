@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This Python file uses the following encoding: utf-8
 import rospy
 from std_msgs.msg import String, Bool
@@ -60,7 +60,7 @@ def callback(msg):
     try:
         # The depth image is a single-channel float32 image
         depth_image = bridge.imgmsg_to_cv2(msg, "32FC1")
-    except CvBridgeError, e:
+    except CvBridgeError as e:
         rospy.logerr( str(e) )
 
 
@@ -69,7 +69,7 @@ def callback(msg):
     # depth_image[x,y] = the float value in m of a point place a a height x and width y
 
     # Get min dist
-    #print np.asarray(depth_image).shape
+    #print(np.asarray(depth_image).shape)
     (minVal,maxVal,minLoc,maxLoc) = cv2.minMaxLoc(np.asarray(depth_image[100:280]))
     rospy.loginfo("Loc : "+str(minLoc)+"Val : "+str(minVal))
 

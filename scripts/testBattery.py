@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This Python file uses the following encoding: utf-8
 import rospy
 from geometry_msgs.msg import Point
@@ -15,7 +15,7 @@ def callback(msg):
     if msg.status[0].name == 'mobile_base_nodelet_manager: Battery':
         point = Point()
         point.x =  float(msg.status[0].values[1].value)
-        point.y = int(p.findall(check_output("acpi"))[0].rstrip('%'))
+        point.y = int(p.findall(check_output("acpi", text=True))[0].rstrip('%'))
         pubCharge.publish(point)
 
 
@@ -25,9 +25,9 @@ def listener():
     rospy.init_node('batteryMonitor', anonymous=True)
     rospy.Subscriber("/diagnostics", DiagnosticArray, callback)
     p = re.compile('[0-9]+%')
-    rospy.logwarn(str(int(p.findall(check_output("acpi"))[0].rstrip('%'))))
+    rospy.logwarn(str(int(p.findall(check_output("acpi", text=True))[0].rstrip('%'))))
     point = Point()
-    point.y = int(p.findall(check_output("acpi"))[0].rstrip('%'))
+    point.y = int(p.findall(check_output("acpi", text=True))[0].rstrip('%'))
     pubCharge.publish(point)
     rospy.spin()
 

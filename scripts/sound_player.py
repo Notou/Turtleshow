@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This Python file uses the following encoding: utf-8
 import rospy
 from std_msgs.msg import String, Bool, Int8
@@ -66,7 +66,7 @@ class sound_player():
         rospy.spin()
 
     def callback(self, msg):
-        print msg.data
+        print(msg.data)
         self.syncArray = zeroes(self.number)
 
         self.filePath = self.storagePath + "toBePlayed.wav"
@@ -78,7 +78,7 @@ class sound_player():
 
 
     def callbackSound(self, msg):
-        print msg.data
+        print(msg.data)
 
         self.filePath = self.storagePath + msg.data
 
@@ -101,7 +101,7 @@ class sound_player():
             soundThread.start()
 
     def launchButtonSound(self):
-        print self.isPlaying
+        print(self.isPlaying)
         if self.isPlaying:
             rospy.logwarn("Il y a déjà un son en train d'être joué")
             return
@@ -114,7 +114,7 @@ class sound_player():
         self.isPlaying = False
 
     def launchSound(self):
-        print self.isPlaying
+        print(self.isPlaying)
         if self.isPlaying:
             rospy.logwarn("Il y a déjà un son en train d'être joué")
             return

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This Python file uses the following encoding: utf-8
 import rospy
 from std_msgs.msg import String, Bool
@@ -6,8 +6,8 @@ from geometry_msgs.msg import Point
 import sys
 import numpy as np
 import math
-from Tkinter import *
-import ttk as tk
+from tkinter import *
+import tkinter.ttk as tk
 import threading
 from subprocess import call, check_output
 import re
@@ -75,7 +75,7 @@ class ui(Frame):
                 self.listOfTabs[b["Scene"]]["tab"] = tk.Frame(self.tabs)
                 self.listOfTabs[b["Scene"]]["ButtonNumber"]= 0
             button = tk.Button(self.listOfTabs[b["Scene"]]["tab"], command = (lambda type=b["Type"], text=b["Texte"]: self.callbackButton(type,text)), text = b["Nom"])
-            button.grid(row = self.listOfTabs[b["Scene"]]["ButtonNumber"] / self.columnNumber,column = self.listOfTabs[b["Scene"]]["ButtonNumber"] % self.columnNumber, padx = 5, pady = 5)
+            button.grid(row = self.listOfTabs[b["Scene"]]["ButtonNumber"] // self.columnNumber,column = self.listOfTabs[b["Scene"]]["ButtonNumber"] % self.columnNumber, padx = 5, pady = 5)
             self.listOfTabs[b["Scene"]]["ButtonNumber"] = self.listOfTabs[b["Scene"]]["ButtonNumber"] + 1;
         for tab in sorted(self.listOfTabs.keys()):
             self.tabs.add(self.listOfTabs[tab]["tab"], text="Q" + str(tab))
@@ -126,7 +126,7 @@ class ui(Frame):
 
 
     def BatteryChargeCallback(self, msg):
-        regieCharge = int(self.pattern.findall(check_output("acpi"))[0].rstrip('%'))
+        regieCharge = int(self.pattern.findall(check_output("acpi",text=True))[0].rstrip('%'))
         self.regieLaptopChargeLabel.config(text = "Charge de l'ordinateur de régie: " + str(regieCharge) + "%")
         self.sceneLaptopChargeLabel.config(text = "Charge de l'ordinateur sur scene: " + str(msg.y) + "%")
         self.turtlebotChargeLabel.config(text = "Charge du turtlebot: " + str(msg.x) + "%")
