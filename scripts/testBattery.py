@@ -27,6 +27,7 @@ def listener():
     p = re.compile('[0-9]+%')
     rospy.logwarn(str(int(p.findall(check_output("acpi", text=True))[0].rstrip('%'))))
     point = Point()
+    point.x = 21
     point.y = int(p.findall(check_output("acpi", text=True))[0].rstrip('%'))
     pubCharge.publish(point)
     rospy.spin()

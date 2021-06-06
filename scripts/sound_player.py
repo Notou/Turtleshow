@@ -48,11 +48,11 @@ class sound_player():
 
 
         if zoom == 1:
-            self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
+            self.interface = vlc.Instance('--no-audio', '--input-repeat=100', '--no-video-title-show', '--fullscreen', '--mouse-hide-timeout=0')
             self.player=self.interface.media_player_new()
             self.player.toggle_fullscreen()
         else:
-            self.interface = vlc.Instance('--no-audio', '--input-repeat=-1', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(zoom))
+            self.interface = vlc.Instance('--no-audio', '--input-repeat=100', '--video-title-show', '--mouse-hide-timeout=0', '--video-title= ', '--zoom', str(zoom))
             self.player=self.interface.media_player_new()
 
         self.mediaSpeaking = self.interface.media_new(self.storagePath+self.speakingVideoPath)
@@ -135,7 +135,8 @@ class sound_player():
     def launchBaillementSound(self):
 
         self.player.set_media(self.mediaTired)
-        self.player.play()
+        if self.videoOn:
+            self.player.play()
         exitCode = call(["play", "-D", self.filePath, "speed", "0.9", "vol", str(self.playbackVolume)])
         if exitCode != 0:
             rospy.logerr("Erreur à l'émission du son!")

@@ -126,7 +126,7 @@ class ui(Frame):
 
 
     def BatteryChargeCallback(self, msg):
-        regieCharge = int(self.pattern.findall(check_output("acpi",text=True))[0].rstrip('%'))
+        regieCharge = int(self.pattern.findall(check_output("acpi",text=True))[-1].rstrip('%'))
         self.regieLaptopChargeLabel.config(text = "Charge de l'ordinateur de régie: " + str(regieCharge) + "%")
         self.sceneLaptopChargeLabel.config(text = "Charge de l'ordinateur sur scene: " + str(msg.y) + "%")
         self.turtlebotChargeLabel.config(text = "Charge du turtlebot: " + str(msg.x) + "%")
