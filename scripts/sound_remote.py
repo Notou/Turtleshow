@@ -33,6 +33,8 @@ class Gui():
             'Ordi scène': None,
             'Ordi régie': None,
         }
+        self.movement_on = tk.IntVar()
+        self.face_on = tk.IntVar()
 
         self.build_gui(root)
 
@@ -64,19 +66,21 @@ class Gui():
             self.charge_labels[name] = charge
 
         #Boutons de commande
-        self.actionButtonsFrame = ttk.Frame(mainframe)
-        self.actionButtonsFrame.pack(side = RIGHT, fill = BOTH, expand = True)
-        self.videoSwitchButton = Button(self.actionButtonsFrame, command = self.VideoSwitchCallback, background = 'red', activebackground = 'red', text = "Turn video ON")
-        self.videoSwitchButton.pack()
-        self.videoOn = False
-        self.gotToBaseButton = Button(self.actionButtonsFrame, command = self.GotToBaseCallback, text = "Aller à la base")
-        self.gotToBaseButton.pack(pady = 10)
-        self.movementSwitchButton = Button(self.actionButtonsFrame, command = self.MoveSwitchCallback, background = 'red', activebackground = 'red', text = "Turn movement ON")
-        self.movementSwitchButton.pack()
-        self.movementOn = False
+        buttons_frame = ttk.Frame(mainframe, padding=5)
+        buttons_frame.grid(column=3, row=1, columnspan=2, rowspan=2, sticky='nwes')
+        for r in range(3):
+            buttons_frame.columnconfigure(r, weight=1)
+            buttons_frame.rowconfigure(r, weight=1)
+
+        ttk.Button(buttons_frame, command=self.go_to_base, text="Aller à la base").grid(column=0, row=0, sticky='nwes')
+        self.face_button = ttk.Checkbutton(buttons_frame, command=self.toggle_face, variable=self.face_on, text='\u25CB Visage')
+        self.movement_button = ttk.Checkbutton(buttons_frame, command=self.toggle_movement, variable=self.movement_on, text='X Move')
+
+        self.face_button.grid(column=0, row=1, columnspan=2, sticky='nwes')
+        self.movement_button.grid(column=0, row=2, columnspan=2, sticky='nwes')
 
         self.textEntry = tk.Text(mainframe, wrap=tk.WORD, padx=10, pady=10)
-        self.textEntry.pack(side = BOTTOM, fill = BOTH, expand = True, ipady = 20)
+        self.textEntry.grid(column=0, row=3, columnspan=self.columnNumber, sticky='nwes')
 
         self.draw_tabs()
         root.bind_all('<KeyPress-Return>', self._enterHandler)
@@ -121,36 +125,19 @@ class Gui():
             color = 'red' if val < 20 else 'black' if val < 70 else 'green'
             label.config(text=f'{val} %', foreground=color)
 
-    def VideoSwitchCallback(self):
-        toSend = Bool()
-        if self.videoOn:
-            self.videoSwitchButton.config( activebackground = 'red', background = 'red', text = "Turn video ON")
-            self.videoOn = False
-        else:
-            self.videoSwitchButton.config( activebackground = 'green', background = 'green', text = "Turn video OFF")
-            self.videoOn = True
-        toSend.data = self.videoOn
-        self.pubSwitchVideo.publish(toSend)
+    def toggle_face(self):
+        self.pubSwitchVideo.publish(bool(self.face_on.get()))
 
-    def GotToBaseCallback(self):
+    def toggle_movement(self):
+        self.pubSwitchMovement.publish(bool(self.movement_on.get()))
+
+    def go_to_base(self):
         soundThread = threading.Thread(target=self.GoToBase)
         soundThread.daemon = True
         soundThread.start()
 
     def GoToBase(self):
         call(["roslaunch", "kobuki_auto_docking", "activate.launch", "--screen"])
-
-
-    def MoveSwitchCallback(self):
-        toSend = Bool()
-        if self.movementOn:
-            self.movementSwitchButton.config( activebackground = 'red', background = 'red', text = "Turn movement ON")
-            self.movementOn = False
-        else:
-            self.movementSwitchButton.config( activebackground = 'green', background = 'green', text = "Turn movement OFF")
-            self.movementOn = True
-        toSend.data = self.movementOn
-        self.pubSwitchMovement.publish(toSend)
 
 
 if __name__ == '__main__':
