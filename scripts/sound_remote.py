@@ -39,6 +39,7 @@ class Gui():
         self.build_gui(root)
 
         rospy.Subscriber('/turtleshow/robot_charge_level', Point, self.battery_callback)
+        rospy.Subscriber('/turtleshow/gui_command', Point, self.handle_joystick)
 
     def build_gui(self, root):
         s = ttk.Style()
@@ -124,6 +125,44 @@ class Gui():
             self.pub.publish(self.toSend)
         with open(self.storage_path + 'historique_des_textes_entres.txt', 'a') as f:
             pass #f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " : " + self.toSend.data.encode('utf-8') + "\n")
+
+    def handle_joystick(self, msg):
+        value = int(msg.x)
+        kind = int(msg.y)
+        number = int(msg.z)
+        
+        if not value:
+            return
+        
+        if kind & 0x01:    #button
+            if number == 0:
+                result = 'croix'
+                self.movement_button.invoke()
+            elif number == 1:
+                result = 'rond'
+                self.face_button.invoke()
+            elif number == 2:
+                result = 'triangle'
+            elif number == 3:
+                result = 'carré'
+            elif number == 4:
+                result = 'tl'
+            elif number == 5:
+                result = 'tr'
+            else:
+                result = f'unknown button number={number} value={value}'
+
+        elif kind & 0x02:  #axis
+            if number == 2 and value == 32767:
+                result = 'gachette gauche'
+            elif number == 5 and value == 32767:
+                result = 'gachette droite'
+            elif number == 6:
+                result = 'droite' if value > 0 else 'gauche'
+            elif number == 7:
+                result = 'bas' if value > 0 else 'haut'
+            else:
+                result = f'unknown axis number={number} value={value}'
 
     def speak(self, _type, text):
         if _type == "Son":

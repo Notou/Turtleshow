@@ -10,7 +10,7 @@ import contextlib
 from time import sleep
 
 import rospy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Point
 
 
 CONTROLLER_NAME = 'Sony Interactive Entertainment Wireless Controller'
@@ -92,7 +92,8 @@ BUTTON_NAMES = {
 class Controller():
     def __init__(self):
         rospy.init_node('controller', anonymous=True)
-        self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
+        self.pub = rospy.Publisher('/turtleshow/command', Twist, queue_size=10)
+        self.gui_pub = rospy.Publisher('/turtleshow/gui_command', Point, queue_size=10)
         self.device = None
         self.twist = Twist()
         self.twist.linear.y = -1
@@ -207,6 +208,7 @@ class Controller():
                     self.prev_values[axis] = fvalue
 
         self.pub.publish(self.twist)
+        self.gui_pub.publish(value, kind, number)
 
     def toggle_autonomy(self):
         self.twist.linear.y = -self.twist.linear.y
