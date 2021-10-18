@@ -8,6 +8,7 @@ import numpy as np
 import math
 from tkinter import *
 import tkinter as tk
+from tkinter import font
 import tkinter.ttk as ttk
 import threading
 from subprocess import call, check_output
@@ -41,6 +42,19 @@ class Gui():
         rospy.Subscriber('/turtleshow/robot_charge_level', Point, self.battery_callback)
 
     def build_gui(self, root):
+        s = ttk.Style()
+        s.map('TCheckbutton', background=[('!selected', 'red'), ('selected', 'green')])
+
+        label_font = (font.Font(font=s.lookup('TLabel', 'font'))).actual()
+        label_font['weight'] = 'bold'
+        label_font['size'] = 16
+        title_font = font.Font(**label_font)
+        label_font['size'] = 28
+        value_font = font.Font(**label_font)
+        s.configure('TCheckbutton', font=title_font, anchor=tk.CENTER, indicatormargin=5, padding=5)
+        s.configure('ChargeLabel.TLabel', font=title_font, anchor=tk.CENTER)
+        s.configure('ChargeValue.TLabel', font=value_font, anchor=tk.CENTER)
+
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
@@ -59,8 +73,8 @@ class Gui():
 
         for col, name in enumerate(self.charge_labels):
             charge_frame.columnconfigure(col, weight=1)
-            label = ttk.Label(charge_frame, text=name)
-            charge = ttk.Label(charge_frame, text='')
+            label = ttk.Label(charge_frame, text=name, style='ChargeLabel.TLabel')
+            charge = ttk.Label(charge_frame, text='', style='ChargeValue.TLabel')
             label.grid(column=col, row=0, sticky='nesw')
             charge.grid(column=col, row=1, sticky='nesw')
             self.charge_labels[name] = charge
