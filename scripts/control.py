@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import contextlib
+from time import sleep
 
 import rospy
 from std_msgs.msg import String
@@ -114,11 +115,16 @@ class Controller():
             'ry': 0,
         }
 
-        self.device = self.find_device()
-
+    def loop(self):
         while not rospy.is_shutdown():
-            self.updatePositionLoop()
-            self.pub.publish(self.twist)
+            while self.device is None:
+                self.device = self.find_device()
+                if self.device is None:
+                    print(f'Waiting for joystick with name {CONTROLLER_NAME}...')
+                    sleep(1)
+            evbuf = self.get_event()
+            if evbuf:
+                self.update_position(evbuf)
 
     def find_device(self):
         for path in Path('/dev/input').glob(r'js[0-9]'):
@@ -134,6 +140,19 @@ class Controller():
                         return jsdev
             except OSError: 
                 continue
+
+    def remove_device(self):
+        with contextlib.suppress(OSError):
+            self.device.close()
+        self.device = None
+
+    def get_event(self):
+        try:
+            evbuf = self.device.read(8)
+        except OSError:
+            self.remove_device()
+            return ''
+        return evbuf
 
     def get_joystick_map(self, jsfile):
         # Get number of axes and buttons.
@@ -158,44 +177,39 @@ class Controller():
         print(f'{num_axes} axes found: {", ".join(self.axis_map)}')
         print(f'{num_buttons} buttons found: {", ".join(self.button_map)}')
 
-    def updatePositionLoop(self):
-        if not self.device:
-            return
+    def update_position(self, evbuf):
+        time, value, kind, number = struct.unpack('IhBB', evbuf)
 
-        # Main event loop
-        #while True:
-        evbuf = self.device.read(8)
-        if evbuf:
-            time, value, kind, number = struct.unpack('IhBB', evbuf)
+        if kind & 0x80:
+            print('(initial)', end=' '),
 
-            if kind & 0x80:
-                print('(initial)', end=' '),
+        if kind & 0x01:
+            button = self.button_map[number]
+            if button:
+                if value:
+                    print(f'{button} pressed')
+                    if button == 'x':
+                        self.toggle_autonomy()
+                    elif button == 'thumb':
+                        self.input_key = 'escape'
+                else:
+                    pass
+                    print(f'{button} released')
 
-            if kind & 0x01:
-                button = self.button_map[number]
-                if button:
-                    if value:
-                        print(f'{button} pressed')
-                        if button == 'x':
-                            self.toggle_autonomy()
-                        elif button == 'thumb':
-                            self.input_key = 'escape'
-                    else:
-                        pass
-                        print(f'{button} released')
+        if kind & 0x02:
+            axis = self.axis_map[number]
+            if axis:
+                fvalue = value / 32767.0
+                print(f'{axis}  value: {value}  fvalue: {fvalue}')
+                if axis == 'trottle':
+                    print('trottle')
+                elif axis in self.movement_map:
+                    obj, attr, scale = self.movement_map[axis]
+                    val = getattr(obj, attr) - (fvalue - self.prev_values[axis]) * scale
+                    setattr(obj, attr, val)
+                    self.prev_values[axis] = fvalue
 
-            if kind & 0x02:
-                axis = self.axis_map[number]
-                if axis:
-                    fvalue = value / 32767.0
-                    print(f'{axis}  value: {value}  fvalue: {fvalue}')
-                    if axis == 'trottle':
-                        print('trottle')
-                    elif axis in self.movement_map:
-                        obj, attr, scale = self.movement_map[axis]
-                        val = getattr(obj, attr) - (fvalue - self.prev_values[axis]) * scale
-                        setattr(obj, attr, val)
-                        self.prev_values[axis] = fvalue
+        self.pub.publish(self.twist)
 
     def toggle_autonomy(self):
         self.twist.linear.y = -self.twist.linear.y
@@ -203,3 +217,4 @@ class Controller():
 
 if __name__ == '__main__':
     controller = Controller()
+    controller.loop()
