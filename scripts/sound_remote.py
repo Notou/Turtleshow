@@ -30,24 +30,6 @@ class ui(Frame):
         self.soundsFolder = "sons"
         self.columnNumber = 10  #Nombre de colonnes de boutons
 
-        # self.listOfButtons = list()
-        #
-        # self.listOfButtons.append({"Nom":"Bruits","Type":"Son","Scene":1,"Texte":"bruit.wav"})
-        # self.listOfButtons.append({"Nom":"SNCF","Type":"Son","Scene":1,"Texte":"sncf.wav"})
-        # self.listOfButtons.append({"Nom":"Carne","Type":"Son","Scene":1,"Texte":"vache.wav"})
-        # self.listOfButtons.append({"Nom":"Texte","Type":"Texte","Scene":1,"Texte":"Ce texte à été envoyé depuis un bouton."})
-        #
-        #
-        # # Open a file for writing
-        # out_file = open(self.storagePath + "config.json","w")
-        #
-        # # Save the dictionary into this file
-        # # (the 'indent=4' is optional, but makes it more readable)
-        # json.dump(self.listOfButtons,out_file, indent=4, ensure_ascii=False)
-        #
-        # # Close the file
-        # out_file.close()
-
         # Open the file for reading
         in_file = open(self.storagePath + "config.json","r")
         # Load the contents from the file, which creates a new dictionary
@@ -114,7 +96,7 @@ class ui(Frame):
         if self.toSend.data != "":
             self.pub.publish(self.toSend)
         with open(self.storagePath + 'historique_des_textes_entres.txt', 'a') as f:
-            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " : " + self.toSend.data.encode('utf-8') + "\n")
+            pass #f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " : " + self.toSend.data.encode('utf-8') + "\n")
 
     def callbackButton(self,type,text):
         self.toSend = String()
