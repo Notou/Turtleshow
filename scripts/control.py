@@ -85,10 +85,19 @@ BUTTON_NAMES = {
     0x2c3 : 'dpad_down',
 }
 
+
 #Handle joystick inputs
-class stick():
-    def __init__(self, calling):
-        self.calling = calling
+class Controller():
+    def __init__(self):
+        rospy.init_node('controller', anonymous=True)
+        self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
+        self.twist = Twist()
+        self.autonomousMode=True
+        self.lastx = 0
+        self.lastz = 0
+        self.lasty = 0
+        self.lastrx = 0
+        self.changeMode()
 
         # Iterate over the joystick devices.
         print('Available devices:')
@@ -152,6 +161,11 @@ class stick():
         print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
         print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
 
+        while not rospy.is_shutdown():
+            self.updatePositionLoop()
+            self.pub.publish(self.twist)
+
+
     def updatePositionLoop(self):
         if not self.controller:
             return
@@ -172,9 +186,9 @@ class stick():
                     if value:
                         print("%s pressed" % (button))
                         if button == 'x':
-                            self.calling.changeMode()
+                            self.changeMode()
                         elif button == 'thumb':
-                            self.calling.input_key = 'escape'
+                            self.input_key = 'escape'
                     else:
                         pass
                         print("%s released" % (button))
@@ -190,36 +204,21 @@ class stick():
                         print("trottle")
                         #self.top_block.PPM_Modulator.set_axis(2, fvalue)
                     if axis == 'x':
-                        self.calling.twist.angular.z = self.calling.twist.angular.z - (fvalue-self.calling.lastx) * 1.5
-                        self.calling.lastx = fvalue
+                        self.twist.angular.z = self.twist.angular.z - (fvalue-self.lastx) * 1.5
+                        self.lastx = fvalue
                         #self.top_block.PPM_Modulator.set_axis(1, fvalue)
                     if axis == 'rx':
-                        self.calling.twist.angular.z = self.calling.twist.angular.z - (fvalue-self.calling.lastz) * 2
-                        self.calling.lastz = fvalue
+                        self.twist.angular.z = self.twist.angular.z - (fvalue-self.lastz) * 2
+                        self.lastz = fvalue
                         #self.top_block.PPM_Modulator.set_axis(1, fvalue)
                     if axis == 'y':
-                        self.calling.twist.linear.x = self.calling.twist.linear.x - (fvalue-self.calling.lasty) * 0.5
-                        self.calling.lasty = fvalue
+                        self.twist.linear.x = self.twist.linear.x - (fvalue-self.lasty) * 0.5
+                        self.lasty = fvalue
                         #self.top_block.PPM_Modulator.set_axis(0, fvalue)
                     if axis == 'ry':
-                        self.calling.twist.linear.x = self.calling.twist.linear.x - (fvalue-self.calling.lastrx) * 1
-                        self.calling.lastrx = fvalue
+                        self.twist.linear.x = self.twist.linear.x - (fvalue-self.lastrx) * 1
+                        self.lastrx = fvalue
                         #self.top_block.PPM_Modulator.set_axis(3, fvalue)
-class controller():
-    def __init__(self):
-        rospy.init_node('controller', anonymous=True)
-        joy = stick(self)
-        self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
-        self.twist = Twist()
-        self.autonomousMode=True
-        self.lastx = 0
-        self.lastz = 0
-        self.lasty = 0
-        self.lastrx = 0
-        self.changeMode()
-        while not rospy.is_shutdown():
-            joy.updatePositionLoop()
-            self.pub.publish(self.twist)
 
     def changeMode(self):
         if self.autonomousMode:
@@ -231,4 +230,4 @@ class controller():
 
 
 if __name__ == '__main__':
-    controller = controller()
+    controller = Controller()
