@@ -28,15 +28,7 @@ class ui(Frame):
         self.pattern = re.compile('[0-9]+%')
         self.storagePath = "/raccourci_video_robot/"
         self.soundsFolder = "sons"
-        self.columnNumber = 10  #Nombre de colonnes de boutons
-
-        # Open the file for reading
-        in_file = open(self.storagePath + "config.json","r")
-        # Load the contents from the file, which creates a new dictionary
-        self.listOfButtons = json.load(in_file)
-        # Close the file... we don't need it anymore
-        in_file.close()
-
+        self.columnNumber = 5  #Nombre de colonnes de boutons
 
         Frame.__init__(self, master)
         self.config(height = 50, width = 100)
@@ -49,19 +41,6 @@ class ui(Frame):
         #Sounds Buttons
         self.tabs = tk.Notebook(self.topFrame)
         self.tabs.pack(side = TOP, fill = BOTH, expand = True)
-
-        self.listOfTabs = dict()
-        for b in self.listOfButtons:
-            if not b["Scene"] in self.listOfTabs:
-                self.listOfTabs[b["Scene"]] = dict()
-                self.listOfTabs[b["Scene"]]["tab"] = tk.Frame(self.tabs)
-                self.listOfTabs[b["Scene"]]["ButtonNumber"]= 0
-            button = tk.Button(self.listOfTabs[b["Scene"]]["tab"], command = (lambda type=b["Type"], text=b["Texte"]: self.callbackButton(type,text)), text = b["Nom"])
-            button.grid(row = self.listOfTabs[b["Scene"]]["ButtonNumber"] // self.columnNumber,column = self.listOfTabs[b["Scene"]]["ButtonNumber"] % self.columnNumber, padx = 5, pady = 5)
-            self.listOfTabs[b["Scene"]]["ButtonNumber"] = self.listOfTabs[b["Scene"]]["ButtonNumber"] + 1;
-        for tab in sorted(self.listOfTabs.keys()):
-            self.tabs.add(self.listOfTabs[tab]["tab"], text="Q" + str(tab))
-
 
         #Affichage de la charge
         self.stateDisplayFrame = tk.Frame(self.topFrame)
@@ -87,7 +66,23 @@ class ui(Frame):
 
         self.textEntry = Text(self, wrap=WORD, padx = 10, pady = 10)
         self.textEntry.pack(side = BOTTOM, fill = BOTH, expand = True, ipady = 20)
+        
+        self.draw_tabs()
         self.bind_all('<KeyPress-Return>', self._enterHandler)
+
+    def draw_tabs(self):
+        tabs = self.tabs.winfo_children()
+
+        with open(self.storagePath + 'config.json') as config:
+            config_dict = json.load(config)
+
+        for name, buttons in config_dict.items():
+            tab = tk.Frame(self.tabs)
+            self.tabs.add(tab, text=name)
+            for i, btn in enumerate(buttons):
+                button = tk.Button(tab, text=btn['Nom'], command=(lambda _type=btn['Type'], text=btn['Texte']: self.callbackButton(_type,text)))
+                r, c = divmod(i, self.columnNumber)
+                button.grid(row=r, column=c, padx=5, pady=5)
 
     def _enterHandler(self,event):
         self.toSend = String()
