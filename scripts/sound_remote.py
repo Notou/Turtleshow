@@ -33,6 +33,7 @@ class Gui():
             'Ordi scène': None,
             'Ordi régie': None,
         }
+        self.active_button = None
         self.movement_on = tk.IntVar()
         self.face_on = tk.IntVar()
 
@@ -43,6 +44,7 @@ class Gui():
 
     def build_gui(self, root):
         s = ttk.Style()
+        s.map('TButton', background=[('selected', '#ffa0a0')])
         s.map('TCheckbutton', background=[('!selected', 'red'), ('selected', 'green')])
 
         label_font = (font.Font(font=s.lookup('TLabel', 'font'))).actual()
@@ -99,9 +101,11 @@ class Gui():
 
         self.draw_tabs()
         root.bind_all('<KeyPress-Return>', self.return_pressed)
+        root.bind_all('<<NotebookTabChanged>>', self.tab_changed)
 
     def draw_tabs(self):
         tabs = self.tabs.winfo_children()
+        self.active_button = None
         for tab in tabs:
             self.tabs.forget(tab)
             tab.destroy()
@@ -116,6 +120,8 @@ class Gui():
                 button = ttk.Button(tab, text=btn['Nom'], command=(lambda _type=btn['Type'], text=btn['Texte']: self.speak(_type,text)))
                 r, c = divmod(i, self.column_count)
                 button.grid(row=r, column=c, padx=5, pady=5)
+
+        self.activate_button(self.tabs.winfo_children()[0].winfo_children()[0])
 
     def return_pressed(self, event):
         self.toSend = String()
@@ -147,16 +153,22 @@ class Gui():
                 result = 'carré'
             elif number == 4:
                 result = 'tl'
+                if self.active_button:
+                    self.active_button.invoke()
             elif number == 5:
                 result = 'tr'
+                if self.active_button:
+                    self.active_button.invoke()
             else:
                 result = f'unknown button number={number} value={value}'
 
         elif kind & 0x02:  #axis
             if number == 2 and value == 32767:
                 result = 'gachette gauche'
+                self.switch_button(-1)
             elif number == 5 and value == 32767:
                 result = 'gachette droite'
+                self.switch_button(1)
             elif number == 6:
                 result = 'droite' if value > 0 else 'gauche'
                 self.switch_tab() if value > 0 else self.switch_tab(forward=False)
@@ -170,6 +182,26 @@ class Gui():
         add = 1 if forward else -1
         _next = (current + add) % self.tabs.index('end')
         self.tabs.select(_next)
+
+    def tab_changed(self, event):
+        current_tab = self.tabs.index('current')
+        buttons = self.tabs.winfo_children()[current_tab].winfo_children()
+        self.activate_button(buttons[0])
+
+    def switch_button(self, diff):
+        active = self.active_button
+        buttons = active.master.winfo_children()
+        total = len(buttons)
+        index = buttons.index(active)
+
+        target = (index + diff) % total
+        self.activate_button(buttons[target])
+
+    def activate_button(self, button):
+        if self.active_button:
+            self.active_button.state(['!selected'])
+        self.active_button = button
+        button.state(['selected'])
 
     def speak(self, _type, text):
         if _type == "Son":
