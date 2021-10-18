@@ -92,12 +92,11 @@ class Controller():
         rospy.init_node('controller', anonymous=True)
         self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
         self.twist = Twist()
-        self.autonomousMode=True
+        self.twist.linear.y = -1
         self.lastx = 0
         self.lastz = 0
         self.lasty = 0
         self.lastrx = 0
-        self.changeMode()
 
         # Iterate over the joystick devices.
         print('Available devices:')
@@ -186,7 +185,7 @@ class Controller():
                     if value:
                         print("%s pressed" % (button))
                         if button == 'x':
-                            self.changeMode()
+                            self.toggle_autonomy()
                         elif button == 'thumb':
                             self.input_key = 'escape'
                     else:
@@ -220,13 +219,8 @@ class Controller():
                         self.lastrx = fvalue
                         #self.top_block.PPM_Modulator.set_axis(3, fvalue)
 
-    def changeMode(self):
-        if self.autonomousMode:
-            self.autonomousMode = False
-            self.twist.linear.y = -1
-        else:
-            self.autonomousMode = True
-            self.twist.linear.y = 1
+    def toggle_autonomy(self):
+        self.twist.linear.y = -self.twist.linear.y
 
 
 if __name__ == '__main__':
