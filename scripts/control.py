@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+import contextlib
+
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
@@ -12,6 +15,8 @@ from fcntl import ioctl
 import sys, tty, termios
 import threading
 
+
+CONTROLLER_NAME = 'Sony Interactive Entertainment Wireless Controller'
 
 # These constants were borrowed from linux/input.h
 AXIS_NAMES = {
@@ -91,6 +96,7 @@ class Controller():
     def __init__(self):
         rospy.init_node('controller', anonymous=True)
         self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
+        self.device = None
         self.twist = Twist()
         self.twist.linear.y = -1
         self.axis_map = []
@@ -108,36 +114,26 @@ class Controller():
             'ry': 0,
         }
 
-        # Iterate over the joystick devices.
-        print('Available devices:')
-
-        for fn in os.listdir('/dev/input'):
-            if fn.startswith('js'):
-                print(f'  /dev/input/{fn}')
-
-        # Open the joystick device. Si bug avec js0 mettre js1
-        fn = '/dev/input/js0'
-        print(f'Opening {fn}...')
-        try:
-            self.jsdev = open(fn, 'rb')
-        except:
-            rospy.logerr('No device found')
-            self.controller = False
-            return
-        self.controller = True
-
-        # Get the device name.
-        #buf = bytearray(63)
-        buf = array.array('B', [0] * 64)
-        ioctl(self.jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
-        js_name = buf.tostring()
-        print(f'Device name: {js_name}')
-
-        self.get_joystick_map(self.jsdev)
+        self.device = self.find_device()
 
         while not rospy.is_shutdown():
             self.updatePositionLoop()
             self.pub.publish(self.twist)
+
+    def find_device(self):
+        for path in Path('/dev/input').glob(r'js[0-9]'):
+            buf = bytearray(64)
+            try:
+                with contextlib.ExitStack() as stack:
+                    jsdev = stack.enter_context(path.open('rb'))
+                    ioctl(jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
+                    if buf.decode().strip('\0') == CONTROLLER_NAME:
+                        self.get_joystick_map(jsdev)
+                        print(f'Found joystick {str(path)} with name CONTROLLER_NAME')
+                        stack.pop_all() # Keep the file open
+                        return jsdev
+            except OSError: 
+                continue
 
     def get_joystick_map(self, jsfile):
         # Get number of axes and buttons.
@@ -163,12 +159,12 @@ class Controller():
         print(f'{num_buttons} buttons found: {", ".join(self.button_map)}')
 
     def updatePositionLoop(self):
-        if not self.controller:
+        if not self.device:
             return
 
         # Main event loop
         #while True:
-        evbuf = self.jsdev.read(8)
+        evbuf = self.device.read(8)
         if evbuf:
             time, value, kind, number = struct.unpack('IhBB', evbuf)
 
