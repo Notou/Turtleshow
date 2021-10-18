@@ -20,15 +20,15 @@ from datetime import datetime
 class Gui():
     def __init__(self, root):
         rospy.init_node('sound_remote', anonymous=True)
-        self.pub = rospy.Publisher("/turtleshow/text_to_say", String, queue_size=10)
-        self.pubSound = rospy.Publisher("/turtleshow/sound_to_play", String, queue_size=10)
-        self.pubSwitchVideo = rospy.Publisher("/turtleshow/video_on", Bool, queue_size=10)
-        self.pubSwitchMovement = rospy.Publisher("/turtleshow/movement_on", Bool, queue_size=10)
+        self.pub = rospy.Publisher('/turtleshow/text_to_say', String, queue_size=10)
+        self.speech_pub = rospy.Publisher('/turtleshow/sound_to_play', String, queue_size=10)
+        self.face_pub = rospy.Publisher('/turtleshow/video_on', Bool, queue_size=10)
+        self.movement_pub = rospy.Publisher('/turtleshow/movement_on', Bool, queue_size=10)
 
         self.pattern = re.compile('[0-9]+%')
-        self.storagePath = "/raccourci_video_robot/"
-        self.soundsFolder = "sons"
-        self.columnNumber = 5  #Nombre de colonnes de boutons
+        self.storage_path = '/raccourci_video_robot/'
+        self.sounds_folder = 'sons'
+        self.column_count = 5  #Nombre de colonnes de boutons
         self.charge_labels = {
             'Turtlebot': None,
             'Ordi scène': None,
@@ -60,12 +60,12 @@ class Gui():
 
         mainframe = ttk.Frame(root)
         mainframe.grid(column=0, row=0, sticky='nwes')
-        for i in range(self.columnNumber):
+        for i in range(self.column_count):
             mainframe.columnconfigure(i, weight=1, minsize=100)
 
         # Sounds Tabs & Buttons
         self.tabs = ttk.Notebook(mainframe)
-        self.tabs.grid(column=0, row=0, columnspan=self.columnNumber, sticky='nwes')
+        self.tabs.grid(column=0, row=0, columnspan=self.column_count, sticky='nwes')
 
         #Affichage de la charge
         charge_frame = ttk.LabelFrame(mainframe, text='Battery Charge', padding=5)
@@ -94,11 +94,11 @@ class Gui():
         self.face_button.grid(column=0, row=1, columnspan=2, sticky='nwes')
         self.movement_button.grid(column=0, row=2, columnspan=2, sticky='nwes')
 
-        self.textEntry = tk.Text(mainframe, wrap=tk.WORD, padx=10, pady=10)
-        self.textEntry.grid(column=0, row=3, columnspan=self.columnNumber, sticky='nwes')
+        self.entry = tk.Text(mainframe, wrap=tk.WORD, padx=10, pady=10)
+        self.entry.grid(column=0, row=3, columnspan=self.column_count, sticky='nwes')
 
         self.draw_tabs()
-        root.bind_all('<KeyPress-Return>', self._enterHandler)
+        root.bind_all('<KeyPress-Return>', self.return_pressed)
 
     def draw_tabs(self):
         tabs = self.tabs.winfo_children()
@@ -106,34 +106,32 @@ class Gui():
             self.tabs.forget(tab)
             tab.destroy()
 
-        with open(self.storagePath + 'config.json') as config:
+        with open(self.storage_path + 'config.json') as config:
             config_dict = json.load(config)
 
         for name, buttons in config_dict.items():
             tab = ttk.Frame(self.tabs)
             self.tabs.add(tab, text=name)
             for i, btn in enumerate(buttons):
-                button = ttk.Button(tab, text=btn['Nom'], command=(lambda _type=btn['Type'], text=btn['Texte']: self.callbackButton(_type,text)))
-                r, c = divmod(i, self.columnNumber)
+                button = ttk.Button(tab, text=btn['Nom'], command=(lambda _type=btn['Type'], text=btn['Texte']: self.speak(_type,text)))
+                r, c = divmod(i, self.column_count)
                 button.grid(row=r, column=c, padx=5, pady=5)
 
-    def _enterHandler(self,event):
+    def return_pressed(self, event):
         self.toSend = String()
-        self.toSend.data = self.textEntry.get("1.0",'end-1c').replace('\n', ' ').replace('\r', '')
-        self.textEntry.delete("1.0",'end-1c')
+        self.toSend.data = self.entry.get("1.0",'end-1c').replace('\n', ' ').replace('\r', '')
+        self.entry.delete("1.0",'end-1c')
         if self.toSend.data != "":
             self.pub.publish(self.toSend)
-        with open(self.storagePath + 'historique_des_textes_entres.txt', 'a') as f:
+        with open(self.storage_path + 'historique_des_textes_entres.txt', 'a') as f:
             pass #f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " : " + self.toSend.data.encode('utf-8') + "\n")
 
-    def callbackButton(self,type,text):
-        self.toSend = String()
-        if type == "Son":
-            self.toSend.data = self.soundsFolder + "/" + text
-            self.pubSound.publish(self.toSend)
-        elif type == "Texte":
+    def speak(self, _type, text):
+        if _type == "Son":
+            filename = self.sounds_folder + '/' + text
+            self.speech_pub.publish(filename)
+        elif _type == "Texte":
             self.pub.publish(text)
-
 
     def battery_callback(self, msg):
         charge_regie = int(self.pattern.findall(check_output("acpi",text=True))[-1].rstrip('%'))
@@ -144,17 +142,17 @@ class Gui():
             label.config(text=f'{val} %', foreground=color)
 
     def toggle_face(self):
-        self.pubSwitchVideo.publish(bool(self.face_on.get()))
+        self.face_pub.publish(bool(self.face_on.get()))
 
     def toggle_movement(self):
-        self.pubSwitchMovement.publish(bool(self.movement_on.get()))
+        self.movement_pub.publish(bool(self.movement_on.get()))
 
     def go_to_base(self):
-        soundThread = threading.Thread(target=self.GoToBase)
+        soundThread = threading.Thread(target=self.to_base_thread)
         soundThread.daemon = True
         soundThread.start()
 
-    def GoToBase(self):
+    def to_base_thread(self):
         call(["roslaunch", "kobuki_auto_docking", "activate.launch", "--screen"])
 
 
