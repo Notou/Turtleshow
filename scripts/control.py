@@ -93,10 +93,18 @@ class Controller():
         self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
         self.twist = Twist()
         self.twist.linear.y = -1
-        self.lastx = 0
-        self.lastz = 0
-        self.lasty = 0
-        self.lastrx = 0
+        self.movement_map = {
+            'x': [self.twist.angular, 'z', 1.5],
+            'rx': [self.twist.angular, 'z', 2],
+            'y': [self.twist.linear, 'x', 0.5],
+            'ry': [self.twist.linear, 'x', 1],
+        }        
+        self.prev_values = {
+            'x': 0,
+            'rx': 0,
+            'y': 0,
+            'ry': 0,
+        }
 
         # Iterate over the joystick devices.
         print('Available devices:')
@@ -173,12 +181,12 @@ class Controller():
         #while True:
         evbuf = self.jsdev.read(8)
         if evbuf:
-            time, value, type, number = struct.unpack('IhBB', evbuf)
+            time, value, kind, number = struct.unpack('IhBB', evbuf)
 
-            if type & 0x80:
-                print("(initial)"),
+            if kind & 0x80:
+                print("(initial)", end=" "),
 
-            if type & 0x01:
+            if kind & 0x01:
                 button = self.button_map[number]
                 if button:
                     self.button_states[button] = value
@@ -192,8 +200,7 @@ class Controller():
                         pass
                         print("%s released" % (button))
 
-
-            if type & 0x02:
+            if kind & 0x02:
                 axis = self.axis_map[number]
                 if axis:
                     fvalue = value / 32767.0
@@ -201,23 +208,11 @@ class Controller():
                     self.axis_states[axis] = fvalue
                     if axis == 'trottle':
                         print("trottle")
-                        #self.top_block.PPM_Modulator.set_axis(2, fvalue)
-                    if axis == 'x':
-                        self.twist.angular.z = self.twist.angular.z - (fvalue-self.lastx) * 1.5
-                        self.lastx = fvalue
-                        #self.top_block.PPM_Modulator.set_axis(1, fvalue)
-                    if axis == 'rx':
-                        self.twist.angular.z = self.twist.angular.z - (fvalue-self.lastz) * 2
-                        self.lastz = fvalue
-                        #self.top_block.PPM_Modulator.set_axis(1, fvalue)
-                    if axis == 'y':
-                        self.twist.linear.x = self.twist.linear.x - (fvalue-self.lasty) * 0.5
-                        self.lasty = fvalue
-                        #self.top_block.PPM_Modulator.set_axis(0, fvalue)
-                    if axis == 'ry':
-                        self.twist.linear.x = self.twist.linear.x - (fvalue-self.lastrx) * 1
-                        self.lastrx = fvalue
-                        #self.top_block.PPM_Modulator.set_axis(3, fvalue)
+                    elif axis in self.movement_map:
+                        obj, attr, scale = self.movement_map[axis]
+                        val = getattr(obj, attr) - (fvalue - self.prev_values[axis]) * scale
+                        setattr(obj, attr, val)
+                        self.prev_values[axis] = fvalue
 
     def toggle_autonomy(self):
         self.twist.linear.y = -self.twist.linear.y
