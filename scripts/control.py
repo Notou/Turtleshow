@@ -11,6 +11,7 @@ from time import sleep
 
 import rospy
 from geometry_msgs.msg import Twist, Point
+from std_msgs.msg import Bool
 
 
 CONTROLLER_NAME = 'Sony Interactive Entertainment Wireless Controller'
@@ -94,6 +95,7 @@ class Controller():
         rospy.init_node('controller', anonymous=True)
         self.pub = rospy.Publisher('/turtleshow/command', Twist, queue_size=10)
         self.gui_pub = rospy.Publisher('/turtleshow/gui_command', Point, queue_size=10)
+        self.joy_pub = rospy.Publisher('/turtleshow/joystick_connected', Bool, queue_size=10)
         self.device = None
         self.twist = Twist()
         self.twist.linear.y = -1
@@ -118,6 +120,7 @@ class Controller():
             while self.device is None:
                 self.device = self.find_device()
                 if self.device is None:
+                    self.joy_pub.publish(False)
                     print(f'Waiting for joystick with name {CONTROLLER_NAME}...')
                     sleep(1)
             evbuf = self.get_event()
@@ -133,6 +136,7 @@ class Controller():
                     ioctl(jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
                     if buf.decode().strip('\0') == CONTROLLER_NAME:
                         self.get_joystick_map(jsdev)
+                        self.joy_pub.publish(True)
                         print(f'Found joystick {str(path)} with name CONTROLLER_NAME')
                         stack.pop_all() # Keep the file open
                         return jsdev
@@ -142,6 +146,7 @@ class Controller():
     def remove_device(self):
         with contextlib.suppress(OSError):
             self.device.close()
+        self.joy_pub.publish(False)
         self.device = None
 
     def get_event(self):

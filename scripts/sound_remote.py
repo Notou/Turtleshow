@@ -36,11 +36,13 @@ class Gui():
         self.active_button = None
         self.movement_on = tk.IntVar()
         self.face_on = tk.IntVar()
+        self.joystick_text = tk.StringVar()
 
         self.build_gui(root)
 
         rospy.Subscriber('/turtleshow/robot_charge_level', Point, self.battery_callback)
         rospy.Subscriber('/turtleshow/gui_command', Point, self.handle_joystick)
+        rospy.Subscriber('/turtleshow/joystick_connected', Bool, self.joystick_callback)
 
     def build_gui(self, root):
         s = ttk.Style()
@@ -96,6 +98,8 @@ class Gui():
         self.face_button.grid(column=0, row=1, columnspan=2, sticky='nwes')
         self.movement_button.grid(column=0, row=2, columnspan=2, sticky='nwes')
 
+        joy_text = ttk.Label(mainframe, textvariable=self.joystick_text)
+        joy_text.grid(column=0, row=2, columnspan=3)
         self.entry = tk.Text(mainframe, wrap=tk.WORD, padx=10, pady=10)
         self.entry.grid(column=0, row=3, columnspan=self.column_count, sticky='nwes')
 
@@ -217,6 +221,9 @@ class Gui():
             val = round(val)
             color = 'red' if val < 20 else 'black' if val < 70 else 'green'
             label.config(text=f'{val} %', foreground=color)
+
+    def joystick_callback(self, msg):
+        self.joystick_text.set('/!\\ Joystick disconnected /!\\' if not msg.data else '')
 
     def toggle_face(self):
         self.face_pub.publish(bool(self.face_on.get()))
