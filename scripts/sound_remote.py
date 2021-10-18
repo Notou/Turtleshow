@@ -87,6 +87,7 @@ class Gui():
             buttons_frame.rowconfigure(r, weight=1)
 
         ttk.Button(buttons_frame, command=self.go_to_base, text="Aller à la base").grid(column=0, row=0, sticky='nwes')
+        ttk.Button(buttons_frame, command=self.draw_tabs, text="Reload buttons").grid(column=1, row=0, sticky='nwes')
         self.face_button = ttk.Checkbutton(buttons_frame, command=self.toggle_face, variable=self.face_on, text='\u25CB Visage')
         self.movement_button = ttk.Checkbutton(buttons_frame, command=self.toggle_movement, variable=self.movement_on, text='X Move')
 
@@ -101,6 +102,9 @@ class Gui():
 
     def draw_tabs(self):
         tabs = self.tabs.winfo_children()
+        for tab in tabs:
+            self.tabs.forget(tab)
+            tab.destroy()
 
         with open(self.storagePath + 'config.json') as config:
             config_dict = json.load(config)
