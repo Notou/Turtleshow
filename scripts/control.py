@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import signal
 from pathlib import Path
 import contextlib
 from time import sleep
@@ -114,6 +115,7 @@ class Controller():
             'y': 0,
             'ry': 0,
         }
+        signal.signal(signal.SIGINT, self.stop)
 
     def loop(self):
         while not rospy.is_shutdown():
@@ -214,7 +216,12 @@ class Controller():
     def toggle_autonomy(self):
         self.twist.linear.y = -self.twist.linear.y
 
+    def stop(self, sig, frame):
+        raise KeyboardInterrupt
 
 if __name__ == '__main__':
-    controller = Controller()
-    controller.loop()
+    try:
+        controller = Controller()
+        controller.loop()
+    except KeyboardInterrupt:
+        pass
