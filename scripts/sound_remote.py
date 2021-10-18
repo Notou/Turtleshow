@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 # This Python file uses the following encoding: utf-8
-import rospy
-from std_msgs.msg import String, Bool
-from geometry_msgs.msg import Point
-import sys
-import numpy as np
-import math
-from tkinter import *
+
+import re
+import json
+import threading
+from subprocess import call, check_output
+from datetime import datetime
+
 import tkinter as tk
 from tkinter import font
 import tkinter.ttk as ttk
-import threading
-from subprocess import call, check_output
-import re
-import json
-from datetime import datetime
+
+import rospy
+from std_msgs.msg import String, Bool
+from geometry_msgs.msg import Point
 
 
 class Gui():

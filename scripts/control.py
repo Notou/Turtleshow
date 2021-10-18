@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 
+import os
+import struct
+import array
 import signal
+from fcntl import ioctl
 from pathlib import Path
 import contextlib
 from time import sleep
 
 import rospy
-from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Image
-import sys, tty, termios
-import numpy as np
-import math
-import os, struct, array
-from fcntl import ioctl
-import sys, tty, termios
-import threading
 
 
 CONTROLLER_NAME = 'Sony Interactive Entertainment Wireless Controller'
