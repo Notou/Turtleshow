@@ -113,11 +113,11 @@ class Controller():
 
         for fn in os.listdir('/dev/input'):
             if fn.startswith('js'):
-                print('  /dev/input/%s' % (fn))
+                print(f'  /dev/input/{fn}')
 
         # Open the joystick device. Si bug avec js0 mettre js1
         fn = '/dev/input/js0'
-        print('Opening %s...' % fn)
+        print(f'Opening {fn}...')
         try:
             self.jsdev = open(fn, 'rb')
         except:
@@ -131,7 +131,7 @@ class Controller():
         buf = array.array('B', [0] * 64)
         ioctl(self.jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
         js_name = buf.tostring()
-        print('Device name: %s' % js_name)
+        print(f'Device name: {js_name}')
 
         self.get_joystick_map(self.jsdev)
 
@@ -152,15 +152,15 @@ class Controller():
         # Get the axis map.
         buf = bytearray(num_axes)
         ioctl(jsfile, 0x80406a32, buf) # JSIOCGAXMAP
-        self.axis_map = [AXIS_NAMES.get(axis, 'unknown(0x%02x)' % axis) for axis in buf]
+        self.axis_map = [AXIS_NAMES.get(axis, f'unknown({hex(axis)})') for axis in buf]
 
         # Get the button map.
         buf = array.array('H', [0] * num_buttons)
         ioctl(jsfile, 0x80406a34, buf) # JSIOCGBTNMAP
-        self.button_map = [BUTTON_NAMES.get(btn, 'unknown(0x%03x)' % btn) for btn in buf]
+        self.button_map = [BUTTON_NAMES.get(btn, f'unknown({hex(btn)})') for btn in buf]
 
-        print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
-        print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
+        print(f'{num_axes} axes found: {", ".join(self.axis_map)}')
+        print(f'{num_buttons} buttons found: {", ".join(self.button_map)}')
 
     def updatePositionLoop(self):
         if not self.controller:
@@ -173,28 +173,28 @@ class Controller():
             time, value, kind, number = struct.unpack('IhBB', evbuf)
 
             if kind & 0x80:
-                print("(initial)", end=" "),
+                print('(initial)', end=' '),
 
             if kind & 0x01:
                 button = self.button_map[number]
                 if button:
                     if value:
-                        print("%s pressed" % (button))
+                        print(f'{button} pressed')
                         if button == 'x':
                             self.toggle_autonomy()
                         elif button == 'thumb':
                             self.input_key = 'escape'
                     else:
                         pass
-                        print("%s released" % (button))
+                        print(f'{button} released')
 
             if kind & 0x02:
                 axis = self.axis_map[number]
                 if axis:
                     fvalue = value / 32767.0
-                    print(axis, 'value: ', value, ' fvalue: ', fvalue)
+                    print(f'{axis}  value: {value}  fvalue: {fvalue}')
                     if axis == 'trottle':
-                        print("trottle")
+                        print('trottle')
                     elif axis in self.movement_map:
                         obj, attr, scale = self.movement_map[axis]
                         val = getattr(obj, attr) - (fvalue - self.prev_values[axis]) * scale
