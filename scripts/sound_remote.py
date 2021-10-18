@@ -239,6 +239,10 @@ class Gui():
     def to_base_thread(self):
         call(["roslaunch", "kobuki_auto_docking", "activate.launch", "--screen"])
 
+    def debug(self, msg):        
+        self.entry.delete("1.0", 'end-1c')
+        self.entry.insert("1.0", msg)
+
 
 if __name__ == '__main__':
     root = tk.Tk()
