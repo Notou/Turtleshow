@@ -93,6 +93,8 @@ class Controller():
         self.pub = rospy.Publisher("/turtleshow/command", Twist, queue_size=10)
         self.twist = Twist()
         self.twist.linear.y = -1
+        self.axis_map = []
+        self.button_map = []
         self.movement_map = {
             'x': [self.twist.angular, 'z', 1.5],
             'rx': [self.twist.angular, 'z', 2],
@@ -113,9 +115,6 @@ class Controller():
             if fn.startswith('js'):
                 print('  /dev/input/%s' % (fn))
 
-        self.axis_map = []
-        self.button_map = []
-
         # Open the joystick device. Si bug avec js0 mettre js1
         fn = '/dev/input/js0'
         print('Opening %s...' % fn)
@@ -134,38 +133,34 @@ class Controller():
         js_name = buf.tostring()
         print('Device name: %s' % js_name)
 
-        # Get number of axes and buttons.
-        buf = array.array('B', [0])
-        ioctl(self.jsdev, 0x80016a11, buf) # JSIOCGAXES
-        num_axes = buf[0]
-
-        buf = array.array('B', [0])
-        ioctl(self.jsdev, 0x80016a12, buf) # JSIOCGBUTTONS
-        num_buttons = buf[0]
-
-        # Get the axis map.
-        buf = array.array('B', [0] * 0x40)
-        ioctl(self.jsdev, 0x80406a32, buf) # JSIOCGAXMAP
-
-        for axis in buf[:num_axes]:
-            axis_name = AXIS_NAMES.get(axis, 'unknown(0x%02x)' % axis)
-            self.axis_map.append(axis_name)
-
-        # Get the button map.
-        buf = array.array('H', [0] * 200)
-        ioctl(self.jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
-
-        for btn in buf[:num_buttons]:
-            btn_name = BUTTON_NAMES.get(btn, 'unknown(0x%03x)' % btn)
-            self.button_map.append(btn_name)
-
-        print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
-        print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
+        self.get_joystick_map(self.jsdev)
 
         while not rospy.is_shutdown():
             self.updatePositionLoop()
             self.pub.publish(self.twist)
 
+    def get_joystick_map(self, jsfile):
+        # Get number of axes and buttons.
+        buf = bytearray(1)
+        ioctl(jsfile, 0x80016a11, buf) # JSIOCGAXES
+        num_axes = buf[0]
+
+        buf = bytearray(1)
+        ioctl(jsfile, 0x80016a12, buf) # JSIOCGBUTTONS
+        num_buttons = buf[0]
+
+        # Get the axis map.
+        buf = bytearray(num_axes)
+        ioctl(jsfile, 0x80406a32, buf) # JSIOCGAXMAP
+        self.axis_map = [AXIS_NAMES.get(axis, 'unknown(0x%02x)' % axis) for axis in buf]
+
+        # Get the button map.
+        buf = array.array('H', [0] * num_buttons)
+        ioctl(jsfile, 0x80406a34, buf) # JSIOCGBTNMAP
+        self.button_map = [BUTTON_NAMES.get(btn, 'unknown(0x%03x)' % btn) for btn in buf]
+
+        print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
+        print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
 
     def updatePositionLoop(self):
         if not self.controller:
