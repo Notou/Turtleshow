@@ -159,10 +159,17 @@ class Gui():
                 result = 'gachette droite'
             elif number == 6:
                 result = 'droite' if value > 0 else 'gauche'
+                self.switch_tab() if value > 0 else self.switch_tab(forward=False)
             elif number == 7:
                 result = 'bas' if value > 0 else 'haut'
             else:
                 result = f'unknown axis number={number} value={value}'
+
+    def switch_tab(self, forward=True):
+        current = self.tabs.index('current')
+        add = 1 if forward else -1
+        _next = (current + add) % self.tabs.index('end')
+        self.tabs.select(_next)
 
     def speak(self, _type, text):
         if _type == "Son":
