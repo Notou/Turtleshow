@@ -113,10 +113,6 @@ class Controller():
             if fn.startswith('js'):
                 print('  /dev/input/%s' % (fn))
 
-        # We'll store the states here.
-        self.axis_states = {}
-        self.button_states = {}
-
         self.axis_map = []
         self.button_map = []
 
@@ -154,7 +150,6 @@ class Controller():
         for axis in buf[:num_axes]:
             axis_name = AXIS_NAMES.get(axis, 'unknown(0x%02x)' % axis)
             self.axis_map.append(axis_name)
-            self.axis_states[axis_name] = 0.0
 
         # Get the button map.
         buf = array.array('H', [0] * 200)
@@ -163,7 +158,6 @@ class Controller():
         for btn in buf[:num_buttons]:
             btn_name = BUTTON_NAMES.get(btn, 'unknown(0x%03x)' % btn)
             self.button_map.append(btn_name)
-            self.button_states[btn_name] = 0
 
         print('%d axes found: %s' % (num_axes, ', '.join(self.axis_map)))
         print('%d buttons found: %s' % (num_buttons, ', '.join(self.button_map)))
@@ -189,7 +183,6 @@ class Controller():
             if kind & 0x01:
                 button = self.button_map[number]
                 if button:
-                    self.button_states[button] = value
                     if value:
                         print("%s pressed" % (button))
                         if button == 'x':
@@ -205,7 +198,6 @@ class Controller():
                 if axis:
                     fvalue = value / 32767.0
                     print(axis, 'value: ', value, ' fvalue: ', fvalue)
-                    self.axis_states[axis] = fvalue
                     if axis == 'trottle':
                         print("trottle")
                     elif axis in self.movement_map:
