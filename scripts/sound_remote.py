@@ -24,14 +24,19 @@ class Gui():
         self.pubSwitchVideo = rospy.Publisher("/turtleshow/video_on", Bool, queue_size=10)
         self.pubSwitchMovement = rospy.Publisher("/turtleshow/movement_on", Bool, queue_size=10)
 
-        rospy.Subscriber("/turtleshow/robot_charge_level", Point, self.BatteryChargeCallback)
-
         self.pattern = re.compile('[0-9]+%')
         self.storagePath = "/raccourci_video_robot/"
         self.soundsFolder = "sons"
         self.columnNumber = 5  #Nombre de colonnes de boutons
+        self.charge_labels = {
+            'Turtlebot': None,
+            'Ordi scène': None,
+            'Ordi régie': None,
+        }
 
         self.build_gui(root)
+
+        rospy.Subscriber('/turtleshow/robot_charge_level', Point, self.battery_callback)
 
     def build_gui(self, root):
         root.columnconfigure(0, weight=1)
@@ -47,14 +52,16 @@ class Gui():
         self.tabs.grid(column=0, row=0, columnspan=self.columnNumber, sticky='nwes')
 
         #Affichage de la charge
-        self.stateDisplayFrame = ttk.Frame(mainframe)
-        self.stateDisplayFrame.pack(side = LEFT, fill = X, expand = True)
-        self.turtlebotChargeLabel = ttk.Label(self.stateDisplayFrame, text = "Charge du turtlebot: " + "---")
-        self.turtlebotChargeLabel.pack()
-        self.sceneLaptopChargeLabel = ttk.Label(self.stateDisplayFrame, text = "Charge de l'ordinateur sur scene: " + "---")
-        self.sceneLaptopChargeLabel.pack()
-        self.regieLaptopChargeLabel = ttk.Label(self.stateDisplayFrame, text = "Charge de l'ordinateur de régie: " + "---")
-        self.regieLaptopChargeLabel.pack()
+        charge_frame = ttk.LabelFrame(mainframe, text='Battery Charge', padding=5)
+        charge_frame.grid(column=0, row=1, columnspan=3, sticky='nwes')
+
+        for col, name in enumerate(self.charge_labels):
+            charge_frame.columnconfigure(col, weight=1)
+            label = ttk.Label(charge_frame, text=name)
+            charge = ttk.Label(charge_frame, text='')
+            label.grid(column=col, row=0, sticky='nesw')
+            charge.grid(column=col, row=1, sticky='nesw')
+            self.charge_labels[name] = charge
 
         #Boutons de commande
         self.actionButtonsFrame = ttk.Frame(mainframe)
@@ -106,31 +113,13 @@ class Gui():
             self.pub.publish(text)
 
 
-    def BatteryChargeCallback(self, msg):
-        regieCharge = int(self.pattern.findall(check_output("acpi",text=True))[-1].rstrip('%'))
-        self.regieLaptopChargeLabel.config(text = "Charge de l'ordinateur de régie: " + str(regieCharge) + "%")
-        self.sceneLaptopChargeLabel.config(text = "Charge de l'ordinateur sur scene: " + str(msg.y) + "%")
-        self.turtlebotChargeLabel.config(text = "Charge du turtlebot: " + str(msg.x) + "%")
-        if regieCharge < 20:
-            self.regieLaptopChargeLabel.config( foreground = 'red')
-        elif regieCharge < 50:
-            self.regieLaptopChargeLabel.config( foreground = 'brown')
-        else:
-            self.regieLaptopChargeLabel.config( foreground = 'green')
+    def battery_callback(self, msg):
+        charge_regie = int(self.pattern.findall(check_output("acpi",text=True))[-1].rstrip('%'))
 
-        if msg.y < 20:
-            self.sceneLaptopChargeLabel.config( foreground = 'red')
-        elif msg.y < 50:
-            self.sceneLaptopChargeLabel.config( foreground = 'brown')
-        else:
-            self.sceneLaptopChargeLabel.config( foreground = 'green')
-
-        if msg.x < 20:
-            self.turtlebotChargeLabel.config( foreground = 'red')
-        elif msg.x < 50:
-            self.turtlebotChargeLabel.config( foreground = 'brown')
-        else:
-            self.turtlebotChargeLabel.config( foreground = 'green')
+        for label, val in zip(self.charge_labels.values(), [msg.x, msg.y, charge_regie]):
+            val = round(val)
+            color = 'red' if val < 20 else 'black' if val < 70 else 'green'
+            label.config(text=f'{val} %', foreground=color)
 
     def VideoSwitchCallback(self):
         toSend = Bool()
